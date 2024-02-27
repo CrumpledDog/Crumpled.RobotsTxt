@@ -1,4 +1,5 @@
 using Crumpled.RobotsTxt;
+using RobotsTxt;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -7,7 +8,7 @@ builder.CreateUmbracoBuilder()
     .AddWebsite()
     .AddDeliveryApi()
     .AddComposers()
-    .AddCrumpledRobotsTxt()
+    .AddCrumpledRobotsTxt("htttp://mysite.com/")
     .Build();
 
 WebApplication app = builder.Build();
@@ -27,5 +28,7 @@ app.UseUmbraco()
         u.UseBackOfficeEndpoints();
         u.UseWebsiteEndpoints();
     });
+
+app.UseRobotsTxt();
 
 await app.RunAsync();
