@@ -1,13 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-    <StaticWebAssetBasePath>App_Plugins/Crumpled.RobotsTxt</StaticWebAssetBasePath>
-  </PropertyGroup>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+		<StaticWebAssetBasePath>App_Plugins/Crumpled.RobotsTxt</StaticWebAssetBasePath>
+		<EnableDefaultContentItems>false</EnableDefaultContentItems>
+	</PropertyGroup>
 
-  <PropertyGroup>
+	<PropertyGroup>
     <PackageId>Crumpled.RobotsTxt</PackageId>
     <Product>Crumpled.RobotsTxt</Product>
     <Title>Crumpled.RobotsTxt</Title>
@@ -31,6 +32,12 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="buildTransitive\**" PackagePath="buildTransitive" />
+		<Content Include="appsettings-schema.Crumpled.RobotsTxt.json" PackagePath="" />
+		<Content Include="wwwroot\**" />
 	</ItemGroup>
 
 </Project>
