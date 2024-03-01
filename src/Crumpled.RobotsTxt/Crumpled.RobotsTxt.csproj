@@ -1,36 +1,51 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
-  <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-    <StaticWebAssetBasePath>App_Plugins/Crumpled.RobotsTxt</StaticWebAssetBasePath>
-  </PropertyGroup>
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+		<StaticWebAssetBasePath>App_Plugins/Crumpled.RobotsTxt</StaticWebAssetBasePath>
+		<EnableDefaultContentItems>false</EnableDefaultContentItems>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <PackageId>Crumpled.RobotsTxt</PackageId>
-    <Product>Crumpled.RobotsTxt</Product>
-    <Title>Crumpled.RobotsTxt</Title>
-    <Description>Adds the Crumpled RobotsTxt</Description>
-    <PackageTags>umbraco plugin package</PackageTags>
-    <Company>Crumpled Dog</Company>
-  </PropertyGroup>
+	<PropertyGroup>
+		<PackageId>Crumpled.RobotsTxt</PackageId>
+		<Product>Crumpled.RobotsTxt</Product>
+		<Title>Crumpled.RobotsTxt</Title>
+		<Description>Adds the Crumpled RobotsTxt</Description>
+		<PackageTags>umbraco plugin package</PackageTags>
+		<Company>Crumpled Dog</Company>
+		<PackageIcon>crumpled-robots-txt.png</PackageIcon>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="RobotsTxtCore" Version="3.0.0" />
-    <PackageReference Include="Umbraco.Cms.Web.Website" Version="12.0.1" />
-    <PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="12.0.1" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="RobotsTxtCore" Version="3.0.0" />
+		<PackageReference Include="Umbraco.Cms.Web.Website" Version="12.0.1" />
+		<PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="12.0.1" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="GitVersion.MsBuild" Version="5.12.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="buildTransitive\**" PackagePath="buildTransitive" />
+		<Content Include="appsettings-schema.Crumpled.RobotsTxt.json" PackagePath="" />
+		<Content Include="wwwroot\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="crumpled-robots-txt.png">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
 	</ItemGroup>
 
 </Project>

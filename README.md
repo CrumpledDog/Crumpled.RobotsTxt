@@ -2,6 +2,8 @@
 
 This package adds the Crumpled Robots Txt
 
+<img src="crumpled-robots-txt.svg" width="150" />
+
 ## Install NuGet package
 
 ```console
@@ -11,6 +13,24 @@ dotnet add package Crumpled.RobotsTxt --prerelease
 ## Enable in `program.cs`
 
 ```C#
-.AddCrumpledRobotsTxt()
+.AddCrumpledRobotsTxt("http://mysite.com")
+```
+## Enabled the middleware
+
+```C#
+app.UseRobotsTxt();
 ```
 
+## appsettings.json options
+
+```json
+"RobotsTxt": {
+    "IsProduction": false,
+    "Allow": {
+        "SpecialBot2": "/"
+    },
+    "Disallow": {
+        "SpecialBot": "/"
+    }
+}
+```
