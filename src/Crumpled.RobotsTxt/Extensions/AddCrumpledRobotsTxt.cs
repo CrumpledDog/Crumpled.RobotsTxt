@@ -11,8 +11,18 @@ namespace Crumpled.RobotsTxt
 		{
             var robotsTxtOptions = GetRobotsTxtOptions(builder.Config, sitemapDomain);
 
-
-            builder.Services.AddStaticRobotsTxt(builder => builder.BuildRulesFromConfig(robotsTxtOptions));
+            if (robotsTxtOptions.SiteMapDomains != null)
+            {
+                foreach (var domain in robotsTxtOptions.SiteMapDomains)
+                {
+                    var robotsTxtOptionsVariant = GetRobotsTxtOptions(builder.Config, domain.Key);
+                    builder.Services.AddStaticRobotsTxt(builder => builder.BuildRulesFromConfig(robotsTxtOptionsVariant).ForHostnames(domain.Value));
+                }
+            }
+            else
+            {
+                builder.Services.AddStaticRobotsTxt(builder => builder.BuildRulesFromConfig(robotsTxtOptions));
+            }
 
             return builder;
 		}
@@ -38,7 +48,7 @@ namespace Crumpled.RobotsTxt
             if (robotsTxtOptions.SitemapDomain != null)
             {
                 var siteMapUrl = robotsTxtOptions.SitemapDomain + "sitemap.xml";
-                
+
                 builder.AddSitemap(siteMapUrl);
             }
 
@@ -120,6 +130,12 @@ namespace Crumpled.RobotsTxt
                 {
                     sitemapDomain += "/";
                 }
+
+                if (!sitemapDomain.StartsWith("http"))
+                {
+                    sitemapDomain = "https://" + sitemapDomain;
+                }
+
                 robotsTxtOptions.SitemapDomain = sitemapDomain;
             }
 
