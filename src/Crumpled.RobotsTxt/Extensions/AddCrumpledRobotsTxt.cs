@@ -15,8 +15,8 @@ namespace Crumpled.RobotsTxt
             {
                 foreach (var domain in robotsTxtOptions.SiteMapDomains)
                 {
-                    var robotsTxtOptionsVariant = GetRobotsTxtOptions(builder.Config, domain.Key);
-                    builder.Services.AddStaticRobotsTxt(builder => builder.BuildRulesFromConfig(robotsTxtOptionsVariant).ForHostnames(domain.Value));
+                    var robotsTxtOptionsVariant = GetRobotsTxtOptions(builder.Config, domain.SiteMapDomain);
+                    builder.Services.AddStaticRobotsTxt(builder => builder.BuildRulesFromConfig(robotsTxtOptionsVariant).ForHostnames(domain.HostNames.Split(',')));
                 }
             }
             else

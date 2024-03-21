@@ -19,10 +19,17 @@ dotnet add package Crumpled.RobotsTxt --prerelease
 ## Multiple domain support for the sitemap url can be set 
 
 ```json
-"SiteMapDomains": {
-    "www.mysite.com": [ "www.mysite.com", "mysite.com", "localhost:44389" ],
-    "www.mysite2.com": [ "www.mysite2.com", "mysite2.com", "localhost:44390" ]
-    }
+"SiteMapDomains": [
+  {
+    "HostNames": "www.mysite.com,mysite.com,localhost:44389",
+    "SiteMapDomain": "www.mysite.com"
+  },
+  {
+    "HostNames": "www.mysite2.com,mysite.com,localhost:44390",
+    "SiteMapDomain": "www.mysite3.com"
+  }
+]
+
 ```
 
 ## Enable the middleware
