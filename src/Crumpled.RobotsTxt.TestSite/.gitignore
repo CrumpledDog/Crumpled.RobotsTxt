@@ -477,3 +477,6 @@ appsettings-schema.*.json
 
 # Media files
 #/wwwroot/media/
+
+# Exclude App_Plugins from packages
+**/App_Plugins/*
