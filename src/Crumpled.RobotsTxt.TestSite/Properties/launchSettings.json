@@ -1,14 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
-    "Crumpled.Dashboard.TestSite": {
+    "Crumpled.RobotsTxt.TestSite": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "https://localhost:44389",
+      "applicationUrl": "https://localhost:44389;https://localhost:44390",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }      
+      }
     }
   }
 }

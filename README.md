@@ -15,7 +15,24 @@ dotnet add package Crumpled.RobotsTxt --prerelease
 ```C#
 .AddCrumpledRobotsTxt("http://mysite.com")
 ```
-## Enabled the middleware
+
+## Multiple domain support for the sitemap url can be set 
+
+```json
+"SiteMapDomains": [
+  {
+    "HostNames": "www.mysite.com,mysite.com,localhost:44389",
+    "SiteMapDomain": "www.mysite.com"
+  },
+  {
+    "HostNames": "www.mysite2.com,mysite.com,localhost:44390",
+    "SiteMapDomain": "www.mysite3.com"
+  }
+]
+
+```
+
+## Enable the middleware
 
 ```C#
 app.UseRobotsTxt();

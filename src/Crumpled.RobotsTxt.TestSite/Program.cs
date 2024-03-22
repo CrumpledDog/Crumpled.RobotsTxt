@@ -8,13 +8,12 @@ builder.CreateUmbracoBuilder()
     .AddWebsite()
     .AddDeliveryApi()
     .AddComposers()
-    .AddCrumpledRobotsTxt("htttp://mysite.com/")
+    .AddCrumpledRobotsTxt("https://www.mysite.com")
     .Build();
 
 WebApplication app = builder.Build();
 
 await app.BootUmbracoAsync();
-
 
 app.UseUmbraco()
     .WithMiddleware(u =>
