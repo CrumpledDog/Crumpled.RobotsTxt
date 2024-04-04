@@ -19,17 +19,20 @@ dotnet add package Crumpled.RobotsTxt --prerelease
 ## Multiple domain support for the sitemap url can be set 
 
 ```json
-"SiteMapDomains": [
-  {
-    "HostNames": "www.mysite.com,mysite.com,localhost:44389",
-    "SiteMapDomain": "www.mysite.com"
-  },
-  {
-    "HostNames": "www.mysite2.com,mysite.com,localhost:44390",
-    "SiteMapDomain": "www.mysite3.com"
+"Crumpled": {
+  "RobotsTxt": {
+    "SiteMapDomains": [
+      {
+        "HostNames": "www.mysite.com,mysite.com,localhost:44389",
+        "SiteMapDomain": "www.mysite.com"
+      },
+      {
+        "HostNames": "www.mysite2.com,mysite.com,localhost:44390",
+        "SiteMapDomain": "www.mysite3.com"
+      }
+    ]
   }
-]
-
+}
 ```
 
 ## Enable the middleware
@@ -41,13 +44,15 @@ app.UseRobotsTxt();
 ## appsettings.json options
 
 ```json
-"RobotsTxt": {
+"Crumpled": {
+  "RobotsTxt": {
     "IsProduction": false,
     "Allow": {
-        "SpecialBot2": "/"
+      "SpecialBot2": "/"
     },
     "Disallow": {
-        "SpecialBot": "/"
+      "SpecialBot": "/"
     }
+  }
 }
 ```
