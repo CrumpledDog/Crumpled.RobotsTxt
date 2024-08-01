@@ -5,7 +5,7 @@ name: .NET
 
 on:
   push:
-    branches: [ "develop","main" ]
+    branches: [ "develop","main","feature/*" ]
   workflow_dispatch:
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 7.0.x
+        dotnet-version: 8.0.x
     - name: prepare git
       run: |
           git config --global user.name "Crumpled Bot"
@@ -30,6 +30,17 @@ jobs:
       with:
         versionSpec: '5.x'
         
+    - name: Patch version in umbraco-package.json
+      shell: bash
+      env:
+         semver: ${{ steps.gitversion.outputs.semVer }}
+      working-directory: .github/scripts
+      run: |
+           npm i jsonfile
+           npm i semver
+           node patch-umbraco-package.js
+           echo "Version patched in umbraco-package.json"
+
     - name: Determine Version
       id: gitversion
       uses: gittools/actions/gitversion/execute@v0

@@ -23,10 +23,9 @@ app.UseUmbraco()
     })
     .WithEndpoints(u =>
     {
-        u.UseInstallerEndpoints();
-        u.UseBackOfficeEndpoints();
-        u.UseWebsiteEndpoints();
-    });
+	    u.UseBackOfficeEndpoints();
+	    u.UseWebsiteEndpoints();
+	});
 
 app.UseRobotsTxt();
 
