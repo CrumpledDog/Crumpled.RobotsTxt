@@ -29,7 +29,11 @@ jobs:
       uses: gittools/actions/gitversion/setup@v0
       with:
         versionSpec: '5.x'
-        
+
+    - name: Determine Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v0        
+
     - name: Patch version in umbraco-package.json
       shell: bash
       env:
@@ -41,9 +45,6 @@ jobs:
            node patch-umbraco-package.js
            echo "Version patched in umbraco-package.json"
 
-    - name: Determine Version
-      id: gitversion
-      uses: gittools/actions/gitversion/execute@v0
       with:
         useConfigFile: true
     - name: Restore dependencies
