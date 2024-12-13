@@ -1,7 +1,10 @@
-﻿using Crumpled.RobotsTxt.Enums;
+using Crumpled.RobotsTxt.Enums;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using RobotsTxt;
 using Umbraco.Cms.Core.DependencyInjection;
+using Umbraco.Cms.Web.Common.ApplicationBuilder;
 
 namespace Crumpled.RobotsTxt
 {
@@ -20,12 +23,43 @@ namespace Crumpled.RobotsTxt
                 }
             }
             else
-            {
+            { 
                 builder.Services.AddStaticRobotsTxt(builder => builder.BuildRulesFromConfig(robotsTxtOptions));
             }
 
+            builder.Services.Configure<UmbracoPipelineOptions>(options =>
+            {
+                options.AddFilter(new UmbracoPipelineFilter("robots.txt")
+                {
+                    PreRouting = app => app.UseRobotsTxt()
+                });
+            });
+
             return builder;
 		}
+
+        private static bool ProductionHost(HostString currentHost, IEnumerable<string>? productionHostsExclude, bool isProduction)
+        {
+            if (isProduction)
+            {
+                if (productionHostsExclude != null)
+                {
+                    if (!productionHostsExclude.Contains(currentHost.ToString()))
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         private static RobotsTxtOptionsBuilder BuildRulesFromConfig(this RobotsTxtOptionsBuilder builder, RobotsTxtOptions robotsTxtOptions)
         {
