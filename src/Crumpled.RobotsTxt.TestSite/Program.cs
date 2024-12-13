@@ -11,6 +11,7 @@ builder.CreateUmbracoBuilder()
     .AddCrumpledRobotsTxt("https://www.mysite.com")
     .Build();
 
+
 WebApplication app = builder.Build();
 
 await app.BootUmbracoAsync();
@@ -27,6 +28,6 @@ app.UseUmbraco()
 	    u.UseWebsiteEndpoints();
 	});
 
-app.UseRobotsTxt();
+//app.UseRobotsTxt();
 
 await app.RunAsync();
