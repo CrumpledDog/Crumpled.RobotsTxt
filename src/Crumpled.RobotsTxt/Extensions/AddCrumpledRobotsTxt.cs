@@ -1,10 +1,12 @@
-using Crumpled.RobotsTxt.Enums;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using RobotsTxt;
+
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Web.Common.ApplicationBuilder;
+
+using RobotsTxt;
+
+using Crumpled.RobotsTxt.Enums;
 
 namespace Crumpled.RobotsTxt
 {
@@ -12,19 +14,29 @@ namespace Crumpled.RobotsTxt
 	{
 		public static IUmbracoBuilder AddCrumpledRobotsTxt(this IUmbracoBuilder builder, string? sitemapDomain = null)
 		{
-            var robotsTxtOptions = GetRobotsTxtOptions(builder.Config, sitemapDomain);
+            var robotsTxtOptions = GetRobotsTxtOptions(builder.Config, sitemapDomain, null);
 
-            if (robotsTxtOptions.SiteMapDomains != null)
+            if (robotsTxtOptions.Domains != null)
+            {
+                var domainItems = robotsTxtOptions.Domains.Select(x => x.Value);
+
+                foreach (var domain in domainItems)
+                {
+                    var robotsTxtOptionsVariant = GetRobotsTxtOptions(builder.Config, domain.SiteMapDomain, domain.IsProduction);
+                    builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(robotsTxtOptionsVariant).ForHostnames(domain.HostNames.Split(',')));
+                }
+            }
+            else if (robotsTxtOptions.SiteMapDomains != null)
             {
                 foreach (var domain in robotsTxtOptions.SiteMapDomains)
                 {
-                    var robotsTxtOptionsVariant = GetRobotsTxtOptions(builder.Config, domain.SiteMapDomain);
-                    builder.Services.AddStaticRobotsTxt(builder => builder.BuildRulesFromConfig(robotsTxtOptionsVariant).ForHostnames(domain.HostNames.Split(',')));
+                    var robotsTxtOptionsVariant = GetRobotsTxtOptions(builder.Config, domain.SiteMapDomain, null);
+                    builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(robotsTxtOptionsVariant).ForHostnames(domain.HostNames.Split(',')));
                 }
             }
             else
-            { 
-                builder.Services.AddStaticRobotsTxt(builder => builder.BuildRulesFromConfig(robotsTxtOptions));
+            {
+                builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(robotsTxtOptions));
             }
 
             builder.Services.Configure<UmbracoPipelineOptions>(options =>
@@ -37,29 +49,6 @@ namespace Crumpled.RobotsTxt
 
             return builder;
 		}
-
-        private static bool ProductionHost(HostString currentHost, IEnumerable<string>? productionHostsExclude, bool isProduction)
-        {
-            if (isProduction)
-            {
-                if (productionHostsExclude != null)
-                {
-                    if (!productionHostsExclude.Contains(currentHost.ToString()))
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
 
         private static RobotsTxtOptionsBuilder BuildRulesFromConfig(this RobotsTxtOptionsBuilder builder, RobotsTxtOptions robotsTxtOptions)
         {
@@ -152,11 +141,16 @@ namespace Crumpled.RobotsTxt
             return builder;
         }
 
-        private static RobotsTxtOptions GetRobotsTxtOptions(this IConfiguration configuration, string? sitemapDomain)
+        private static RobotsTxtOptions GetRobotsTxtOptions(this IConfiguration configuration, string? sitemapDomain, bool? isProduction)
         {
             var robotsTxtOptions = new RobotsTxtOptions();
             var robotsTxtOptionsSection = GetRobotsTxtOptionsSection(configuration);
             robotsTxtOptionsSection.Bind(robotsTxtOptions);
+
+            if (isProduction != null)
+            {
+                robotsTxtOptions.IsProduction = (bool)isProduction;
+            }
 
             if (sitemapDomain != null)
             {
