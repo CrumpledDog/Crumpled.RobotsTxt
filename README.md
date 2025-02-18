@@ -19,17 +19,20 @@ dotnet add package Crumpled.RobotsTxt --prerelease
 ## Multiple domain support for the sitemap url can be set 
 
 ```json
-"SiteMapDomains": [
-  {
-    "HostNames": "www.mysite.com,mysite.com,localhost:44389",
-    "SiteMapDomain": "www.mysite.com"
-  },
-  {
-    "HostNames": "www.mysite2.com,mysite.com,localhost:44390",
-    "SiteMapDomain": "www.mysite3.com"
+"Crumpled": {
+  "RobotsTxt": {
+    "SiteMapDomains": [
+      {
+        "HostNames": "www.mysite.com,mysite.com,localhost:44389",
+        "SiteMapDomain": "www.mysite.com"
+      },
+      {
+        "HostNames": "www.mysite2.com,mysite.com,localhost:44390",
+        "SiteMapDomain": "www.mysite3.com"
+      }
+    ]
   }
-]
-
+}
 ```
 
 ## Enable the middleware
@@ -38,16 +41,43 @@ dotnet add package Crumpled.RobotsTxt --prerelease
 app.UseRobotsTxt();
 ```
 
-## appsettings.json options
+## appsettings.json options (recommended)
 
 ```json
-"RobotsTxt": {
+    "RobotsTxt": {
+      "Allow": {
+        "SpecialBot2": "/"
+      },
+      "Disallow": {
+        "SpecialBot": "/"
+      },
+      "Domains": {
+        "Prod": {
+          "HostNames": "www.mysite2.com,mysite.com,localhost:44390",
+          "SiteMapDomain": "www.mysite3.com",
+          "IsProduction": false
+        },
+        "Stage": {
+          "HostNames": "www.mysite.com,mysite.com,localhost:44389",
+          "SiteMapDomain": "www.mysite.com",
+          "IsProduction": true
+        }
+      }
+    }
+```
+
+## appsettings.json options (legacy)
+
+```json
+"Crumpled": {
+  "RobotsTxt": {
     "IsProduction": false,
     "Allow": {
-        "SpecialBot2": "/"
+      "SpecialBot2": "/"
     },
     "Disallow": {
-        "SpecialBot": "/"
+      "SpecialBot": "/"
     }
+  }
 }
 ```
