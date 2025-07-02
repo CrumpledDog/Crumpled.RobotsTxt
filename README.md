@@ -46,10 +46,10 @@ app.UseRobotsTxt();
 ```json
     "RobotsTxt": {
       "Allow": {
-        "SpecialBot2": "/"
+        "SpecialBot2": [ "/" ]
       },
       "Disallow": {
-        "SpecialBot": "/"
+        "SpecialBot": [ "/" ]
       },
       "Domains": {
         "Prod": {

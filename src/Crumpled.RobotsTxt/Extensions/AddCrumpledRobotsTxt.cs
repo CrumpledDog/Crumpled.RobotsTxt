@@ -8,6 +8,8 @@ using RobotsTxt;
 
 using Crumpled.RobotsTxt.Enums;
 
+using static RobotsTxt.RobotsTxtOptionsBuilder;
+
 namespace Crumpled.RobotsTxt
 {
 	public static partial class IUmbracoBuilderExtensions
@@ -50,11 +52,30 @@ namespace Crumpled.RobotsTxt
             return builder;
 		}
 
+        public static SectionBuilder Allow(this SectionBuilder section, string[] path)
+        {
+            foreach (var p in path)
+            {
+                section.Allow(p);
+            }
+            return section;
+        }
+
+        public static SectionBuilder Disallow(this SectionBuilder section, string[] path)
+        {
+            foreach (var p in path)
+            {
+                section.Disallow(p);
+            }
+            return section;
+        }
+
         private static RobotsTxtOptionsBuilder BuildRulesFromConfig(this RobotsTxtOptionsBuilder builder, RobotsTxtOptions robotsTxtOptions)
         {
             if (robotsTxtOptions.Allow != null)
                 foreach (var allowRule in robotsTxtOptions.Allow)
                 {
+                    
                     builder.AddSection(section => section.AddUserAgent(allowRule.Key).Allow(allowRule.Value));
                 }
 
