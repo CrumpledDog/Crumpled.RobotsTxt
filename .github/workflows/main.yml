@@ -5,7 +5,7 @@ name: .NET
 
 on:
   push:
-    branches: [ "develop","main" ]
+    branches: [ "develop","main","main-bellissima","feature/*" ]
   workflow_dispatch:
 
 jobs:
@@ -29,12 +29,24 @@ jobs:
       uses: gittools/actions/gitversion/setup@v0
       with:
         versionSpec: '5.x'
-        
+
     - name: Determine Version
       id: gitversion
-      uses: gittools/actions/gitversion/execute@v0
+      uses: gittools/actions/gitversion/execute@v0        
       with:
         useConfigFile: true
+
+    - name: Patch version in umbraco-package.json
+      shell: bash
+      env:
+         semver: ${{ steps.gitversion.outputs.semVer }}
+      working-directory: .github/scripts
+      run: |
+           npm i jsonfile
+           npm i semver
+           node patch-umbraco-package.js
+           echo "Version patched in umbraco-package.json"
+
     - name: Restore dependencies
       run: dotnet restore
     - name: Build

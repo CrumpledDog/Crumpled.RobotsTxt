@@ -1,0 +1,8 @@
+{
+  "$schema": "../../Crumpled.RobotsTxt.TestSite/umbraco-package-schema.json",
+  "allowPackageTelemetry": true,
+  "extensions": [],
+  "id": "Crumpled.RobotsTxt",
+  "name": "Crumpled.RobotsTxt",
+  "version": null
+}
