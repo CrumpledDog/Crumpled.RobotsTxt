@@ -6,7 +6,7 @@ branches:
     increment: Inherit
     prevent-increment-of-merged-branch-version: true
     track-merge-target: false
-    regex: ^master$|^main$
+    regex: ^master$|^main$|^main-bellissima$
     source-branches:
     - develop
     - hotfix

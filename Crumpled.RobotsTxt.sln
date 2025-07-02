@@ -9,6 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crumpled.RobotsTxt.TestSite
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{427DE92C-7F67-41D7-AD9F-282949123EE9}"
 	ProjectSection(SolutionItems) = preProject
+		GitVersion.yml = GitVersion.yml
 		.github\workflows\main.yml = .github\workflows\main.yml
 		.github\scripts\patch-umbraco-package.js = .github\scripts\patch-umbraco-package.js
 	EndProjectSection
