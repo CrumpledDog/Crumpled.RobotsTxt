@@ -6,6 +6,7 @@
 		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
 		<StaticWebAssetBasePath>App_Plugins/Crumpled.RobotsTxt</StaticWebAssetBasePath>
 		<EnableDefaultContentItems>false</EnableDefaultContentItems>
+		<NoWarn>$(NoWarn);NU5118</NoWarn>
 	</PropertyGroup>
 
 	<PropertyGroup>
