@@ -14,9 +14,9 @@ namespace Crumpled.RobotsTxt
 {
 	public static partial class IUmbracoBuilderExtensions
 	{
-		public static IUmbracoBuilder AddCrumpledRobotsTxt(this IUmbracoBuilder builder, string? sitemapDomain = null)
+		public static IUmbracoBuilder AddCrumpledRobotsTxt(this IUmbracoBuilder builder)
 		{
-            var robotsTxtOptions = GetRobotsTxtOptions(builder.Config, sitemapDomain, null);
+            var robotsTxtOptions = GetRobotsTxtOptions(builder.Config);
 
             if (robotsTxtOptions.Domains != null)
             {
@@ -24,21 +24,13 @@ namespace Crumpled.RobotsTxt
 
                 foreach (var domain in domainItems)
                 {
-                    var robotsTxtOptionsVariant = GetRobotsTxtOptions(builder.Config, domain.SiteMapDomain, domain.IsProduction);
-                    builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(robotsTxtOptionsVariant).ForHostnames(domain.HostNames.Split(',')));
-                }
-            }
-            else if (robotsTxtOptions.SiteMapDomains != null)
-            {
-                foreach (var domain in robotsTxtOptions.SiteMapDomains)
-                {
-                    var robotsTxtOptionsVariant = GetRobotsTxtOptions(builder.Config, domain.SiteMapDomain, null);
-                    builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(robotsTxtOptionsVariant).ForHostnames(domain.HostNames.Split(',')));
+                    var (options, sitemapUrl) = GetRobotsTxtOptionsForDomain(builder.Config, domain.SiteMapDomain, domain.IsProduction);
+                    builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(options, sitemapUrl).ForHostnames(domain.HostNames.Split(',')));
                 }
             }
             else
             {
-                builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(robotsTxtOptions));
+                builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(robotsTxtOptions, null));
             }
 
             builder.Services.Configure<UmbracoPipelineOptions>(options =>
@@ -70,7 +62,7 @@ namespace Crumpled.RobotsTxt
             return section;
         }
 
-        private static RobotsTxtOptionsBuilder BuildRulesFromConfig(this RobotsTxtOptionsBuilder builder, RobotsTxtOptions robotsTxtOptions)
+        private static RobotsTxtOptionsBuilder BuildRulesFromConfig(this RobotsTxtOptionsBuilder builder, RobotsTxtOptions robotsTxtOptions, string? sitemapUrl)
         {
             if (robotsTxtOptions.Allow != null)
                 foreach (var allowRule in robotsTxtOptions.Allow)
@@ -89,11 +81,9 @@ namespace Crumpled.RobotsTxt
 
             builder.BuildStandardRules(robotsTxtOptions, RuleType.Disallow);
 
-            if (robotsTxtOptions.SitemapDomain != null)
+            if (sitemapUrl != null)
             {
-                var siteMapUrl = robotsTxtOptions.SitemapDomain + "sitemap.xml";
-
-                builder.AddSitemap(siteMapUrl);
+                builder.AddSitemap(sitemapUrl);
             }
 
             return builder;
@@ -162,33 +152,36 @@ namespace Crumpled.RobotsTxt
             return builder;
         }
 
-        private static RobotsTxtOptions GetRobotsTxtOptions(this IConfiguration configuration, string? sitemapDomain, bool? isProduction)
+        private static RobotsTxtOptions GetRobotsTxtOptions(this IConfiguration configuration)
         {
             var robotsTxtOptions = new RobotsTxtOptions();
             var robotsTxtOptionsSection = GetRobotsTxtOptionsSection(configuration);
             robotsTxtOptionsSection.Bind(robotsTxtOptions);
 
-            if (isProduction != null)
-            {
-                robotsTxtOptions.IsProduction = (bool)isProduction;
-            }
-
-            if (sitemapDomain != null)
-            {
-                if (!sitemapDomain.EndsWith("/"))
-                {
-                    sitemapDomain += "/";
-                }
-
-                if (!sitemapDomain.StartsWith("http"))
-                {
-                    sitemapDomain = "https://" + sitemapDomain;
-                }
-
-                robotsTxtOptions.SitemapDomain = sitemapDomain;
-            }
-
             return robotsTxtOptions;
+        }
+
+        private static (RobotsTxtOptions options, string sitemapUrl) GetRobotsTxtOptionsForDomain(this IConfiguration configuration, string sitemapDomain, bool isProduction)
+        {
+            var robotsTxtOptions = new RobotsTxtOptions();
+            var robotsTxtOptionsSection = GetRobotsTxtOptionsSection(configuration);
+            robotsTxtOptionsSection.Bind(robotsTxtOptions);
+
+            robotsTxtOptions.IsProduction = isProduction;
+
+            if (!sitemapDomain.EndsWith("/"))
+            {
+                sitemapDomain += "/";
+            }
+
+            if (!sitemapDomain.StartsWith("http"))
+            {
+                sitemapDomain = "https://" + sitemapDomain;
+            }
+
+            var siteMapUrl = sitemapDomain + "sitemap.xml";
+            
+            return (robotsTxtOptions, siteMapUrl);
         }
 
         private static IConfigurationSection GetRobotsTxtOptionsSection(this IConfiguration configuration)
