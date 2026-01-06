@@ -92,6 +92,9 @@ jobs:
     - name: Update Version Files
       working-directory: ${{ env.PATH_TO_EXTENSION }}
       run: |
+
+        jq '.version = "${{ needs.setup.outputs.semver }}"' wwwroot/umbraco-package.json > temp.json && mv temp.json wwwroot/umbraco-package.json
+
         # Convert semantic version to numeric file version (e.g., 2.0.0-alpha.1 -> 2.0.0.1)
         SEMVER="${{ needs.setup.outputs.semver }}"
         if [[ $SEMVER == *"-"* ]]; then
