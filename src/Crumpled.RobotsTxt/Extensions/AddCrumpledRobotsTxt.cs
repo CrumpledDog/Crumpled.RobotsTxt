@@ -28,14 +28,6 @@ namespace Crumpled.RobotsTxt
                     builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(robotsTxtOptionsVariant).ForHostnames(domain.HostNames.Split(',')));
                 }
             }
-            else if (robotsTxtOptions.SiteMapDomains != null)
-            {
-                foreach (var domain in robotsTxtOptions.SiteMapDomains)
-                {
-                    var robotsTxtOptionsVariant = GetRobotsTxtOptions(builder.Config, domain.SiteMapDomain, null);
-                    builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(robotsTxtOptionsVariant).ForHostnames(domain.HostNames.Split(',')));
-                }
-            }
             else
             {
                 builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(robotsTxtOptions));
