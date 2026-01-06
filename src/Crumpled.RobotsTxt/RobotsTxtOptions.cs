@@ -6,7 +6,6 @@
         public bool IsProduction { get; set; }
         public Dictionary<string, string[]>? Allow { get; set; }
         public Dictionary<string, string[]>? Disallow { get; set; }
-        public string? SitemapDomain { get; set; }
         public Dictionary<string, DomainItem>? Domains { get; set; } = null;
     }
 

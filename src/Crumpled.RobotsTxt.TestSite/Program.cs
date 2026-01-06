@@ -8,7 +8,7 @@ builder.CreateUmbracoBuilder()
     .AddWebsite()
     .AddDeliveryApi()
     .AddComposers()
-    .AddCrumpledRobotsTxt("https://www.mysite.com")
+    .AddCrumpledRobotsTxt()
     .Build();
 
 
