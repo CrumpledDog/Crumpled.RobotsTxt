@@ -28,13 +28,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="GitVersion.MsBuild" Version="5.12.0">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-	</ItemGroup>
-
-	<ItemGroup>
 		<Content Include="buildTransitive\**" PackagePath="buildTransitive" />
 		<Content Include="appsettings-schema.Crumpled.RobotsTxt.json" PackagePath="" />
 		<Content Include="wwwroot\**" />
