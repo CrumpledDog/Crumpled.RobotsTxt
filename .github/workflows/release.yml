@@ -3,7 +3,7 @@ name: Build and Package
 env:
   PATH_TO_EXTENSION: "src/Crumpled.RobotsTxt"
   PATH_TO_TESTSITE: "src/Crumpled.RobotsTxt.TestSite"
-  DOTNET_VERSION: '8'
+  DOTNET_VERSION: '10'
 
 on:
  workflow_dispatch:

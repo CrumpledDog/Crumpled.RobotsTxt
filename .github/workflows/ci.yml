@@ -3,11 +3,11 @@ name: Verify Build
 env:
   PATH_TO_EXTENSION: "src/Crumpled.RobotsTxt"
   PATH_TO_TESTSITE: "src/Crumpled.RobotsTxt.TestSite"
-  DOTNET_VERSION: '8'
+  DOTNET_VERSION: '10'
 
 on:
   push:
-    branches: [ "develop/v1" ]
+    branches: [ "develop/v2" ]
 
   workflow_dispatch:
 
