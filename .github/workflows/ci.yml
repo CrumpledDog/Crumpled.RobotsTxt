@@ -1,0 +1,123 @@
+name: Verify Build
+
+env:
+  PATH_TO_EXTENSION: "src/Crumpled.RobotsTxt"
+  PATH_TO_TESTSITE: "src/Crumpled.RobotsTxt.TestSite"
+  DOTNET_VERSION: '10'
+
+on:
+  push:
+    branches: [ "develop/v2" ]
+
+  workflow_dispatch:
+
+jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    outputs:
+      semver: ${{ steps.set-version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+        
+      - name: Fetch all tags
+        run: git fetch --force --tags
+          
+      - name: Semantic Release
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          dry_run: true
+          extra_plugins: |
+            @semantic-release/exec
+            @semantic-release/commit-analyzer
+            @semantic-release/release-notes-generator
+            @semantic-release/github
+            conventional-changelog-conventionalcommits
+
+      - name: Set Version
+        id: set-version
+        run: |
+          if [ -n "${{ steps.semantic.outputs.new_release_version }}" ]; then
+            echo "version=${{ steps.semantic.outputs.new_release_version }}" >> $GITHUB_OUTPUT
+          else
+            # Get the latest tag from git
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+            if [ -n "$LATEST_TAG" ]; then
+              # Remove 'v' prefix if present
+              LATEST_VERSION=${LATEST_TAG#v}
+              echo "version=${LATEST_VERSION}-dev.${{ github.run_number }}" >> $GITHUB_OUTPUT
+            else
+              echo "version=0.1.0-dev.${{ github.run_number }}" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Echo the version
+        run: |
+          echo "Version to use: '${{ steps.set-version.outputs.version }}'"
+          echo "New release version: '${{ steps.semantic.outputs.new_release_version }}'"
+          echo "New release major: '${{ steps.semantic.outputs.new_release_major_version }}'"
+          echo "New release minor: '${{ steps.semantic.outputs.new_release_minor_version }}'"
+          echo "New release patch: '${{ steps.semantic.outputs.new_release_patch_version }}'"
+          echo "Last release version: '${{ steps.semantic.outputs.last_release_version }}'"
+          echo "New release published: '${{ steps.semantic.outputs.new_release_published }}'"
+  build:
+    name: Build, Run, CodeGen and Package
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 5
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+
+    - uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Cache NuGet
+      id: nuget-packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-cache-${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj*') }}
+        restore-keys: |
+          nuget-cache-${{ runner.os }}-nuget-
+
+    - name: Update Version Files
+      working-directory: ${{ env.PATH_TO_EXTENSION }}
+      run: |
+
+        jq '.version = "${{ needs.setup.outputs.semver }}"' wwwroot/umbraco-package.json > temp.json && mv temp.json wwwroot/umbraco-package.json
+
+        # Convert semantic version to numeric file version (e.g., 2.0.0-alpha.1 -> 2.0.0.1)
+        SEMVER="${{ needs.setup.outputs.semver }}"
+        if [[ $SEMVER == *"-"* ]]; then
+          BASE_VERSION=$(echo $SEMVER | cut -d'-' -f1)
+          PRERELEASE=$(echo $SEMVER | cut -d'-' -f2)
+          # Extract number from prerelease (e.g., alpha.1 -> 1, beta.2 -> 2)
+          PRERELEASE_NUM=$(echo $PRERELEASE | grep -o '[0-9]\+$' || echo "0")
+          FILE_VERSION="${BASE_VERSION}.${PRERELEASE_NUM}"
+        else
+          FILE_VERSION="${SEMVER}.0"
+        fi
+        
+        # Find and update csproj file
+        CSPROJ_FILE=$(find . -name "*.csproj" -not -path "*/bin/*" -not -path "*/obj/*" | head -1)
+        sed -i "s|<FileVersion>\$(FileVersionNumber)</FileVersion>|<FileVersion>$FILE_VERSION</FileVersion>|" "$CSPROJ_FILE"
+
+    - name: Build Project
+      working-directory: ${{ env.PATH_TO_TESTSITE }}
+      run: dotnet build -c Release   
+
+    - name: Build sln
+      run: dotnet build ${{ github.workspace }}/*.slnx -c Release        
+
+    - name: Pack NuGet Package
+      working-directory: ${{ env.PATH_TO_EXTENSION }}
+      run: dotnet pack --configuration Release /p:PackageVersion=${{ needs.setup.outputs.semver }}

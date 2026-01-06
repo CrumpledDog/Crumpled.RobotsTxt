@@ -6,6 +6,7 @@
 		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
 		<StaticWebAssetBasePath>App_Plugins/Crumpled.RobotsTxt</StaticWebAssetBasePath>
 		<EnableDefaultContentItems>false</EnableDefaultContentItems>
+		<NoWarn>$(NoWarn);NU5118</NoWarn>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -25,13 +26,6 @@
 	<ItemGroup>
 		<PackageReference Include="RobotsTxtCore" Version="3.1.0-preview1" />
 		<PackageReference Include="Umbraco.Cms.Web.Website" Version="14.0.0" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="GitVersion.MsBuild" Version="5.12.0">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
 	</ItemGroup>
 
 	<ItemGroup>
