@@ -3,6 +3,7 @@
     public class RobotsTxtOptions
     {
         public const string RobotsTxtSection = "RobotsTxt";
+        public bool DisableComposer { get; set; } = false;
         public Dictionary<string, RuleSet>? RuleSets { get; set; }
         public Dictionary<string, SiteItem>? Sites { get; set; } = null;
     }

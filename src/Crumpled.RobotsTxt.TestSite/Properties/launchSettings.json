@@ -5,9 +5,19 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "https://localhost:44389;https://localhost:44390",
+      "applicationUrl": "https://localhost:44389;https://localhost:44390;https://localhost:44391",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+     "Crumpled.RobotsTxt.TestSiteCloud": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:44392",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "CloudTest",
+        "UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME" : "live"
       }
     }
   }
