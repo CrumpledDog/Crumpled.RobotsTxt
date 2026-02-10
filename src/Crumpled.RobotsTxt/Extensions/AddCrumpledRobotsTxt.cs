@@ -27,6 +27,13 @@ namespace Crumpled.RobotsTxt
                     builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(ruleSet, sitemapUrl).ForHostnames(site.HostNames.Split(',')));
                 }
             }
+            else
+            {
+                // Default to blocking all bots when no Sites are configured
+                builder.Services.AddStaticRobotsTxt(robotBuilder => 
+                    robotBuilder.AddSection(section => 
+                        section.AddUserAgent("*").Disallow("/")));
+            }
 
             builder.Services.Configure<UmbracoPipelineOptions>(options =>
             {
