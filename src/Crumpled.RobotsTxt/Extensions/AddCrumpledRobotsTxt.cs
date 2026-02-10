@@ -6,8 +6,6 @@ using Umbraco.Cms.Web.Common.ApplicationBuilder;
 
 using RobotsTxt;
 
-using Crumpled.RobotsTxt.Enums;
-
 using static RobotsTxt.RobotsTxtOptionsBuilder;
 
 namespace Crumpled.RobotsTxt
@@ -18,19 +16,16 @@ namespace Crumpled.RobotsTxt
 		{
             var robotsTxtOptions = GetRobotsTxtOptions(builder.Config);
 
-            if (robotsTxtOptions.Domains != null)
+            if (robotsTxtOptions.Sites != null)
             {
-                var domainItems = robotsTxtOptions.Domains.Select(x => x.Value);
+                var siteItems = robotsTxtOptions.Sites.Select(x => x.Value);
 
-                foreach (var domain in domainItems)
+                foreach (var site in siteItems)
                 {
-                    var (options, sitemapUrl) = GetRobotsTxtOptionsForDomain(builder.Config, domain.SiteMapDomain, domain.IsProduction);
-                    builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(options, sitemapUrl).ForHostnames(domain.HostNames.Split(',')));
+                    var ruleSet = robotsTxtOptions.RuleSets?.GetValueOrDefault(site.RuleSet);
+                    var sitemapUrl = GetSitemapUrl(site.SiteMapDomain);
+                    builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(ruleSet, sitemapUrl).ForHostnames(site.HostNames.Split(',')));
                 }
-            }
-            else
-            {
-                builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(robotsTxtOptions, null));
             }
 
             builder.Services.Configure<UmbracoPipelineOptions>(options =>
@@ -62,24 +57,23 @@ namespace Crumpled.RobotsTxt
             return section;
         }
 
-        private static RobotsTxtOptionsBuilder BuildRulesFromConfig(this RobotsTxtOptionsBuilder builder, RobotsTxtOptions robotsTxtOptions, string? sitemapUrl)
+        private static RobotsTxtOptionsBuilder BuildRulesFromConfig(this RobotsTxtOptionsBuilder builder, RuleSet? ruleSet, string? sitemapUrl)
         {
-            if (robotsTxtOptions.Allow != null)
-                foreach (var allowRule in robotsTxtOptions.Allow)
+            if (ruleSet?.Allow != null)
+            {
+                foreach (var allowRule in ruleSet.Allow)
                 {
-                    
                     builder.AddSection(section => section.AddUserAgent(allowRule.Key).Allow(allowRule.Value));
                 }
+            }
 
-            builder.BuildStandardRules(robotsTxtOptions, RuleType.Allow);
-
-            if (robotsTxtOptions.Disallow != null)
-                foreach (var disAllowRule in robotsTxtOptions.Disallow)
+            if (ruleSet?.Disallow != null)
+            {
+                foreach (var disAllowRule in ruleSet.Disallow)
                 {
                     builder.AddSection(section => section.AddUserAgent(disAllowRule.Key).Disallow(disAllowRule.Value));
                 }
-
-            builder.BuildStandardRules(robotsTxtOptions, RuleType.Disallow);
+            }
 
             if (sitemapUrl != null)
             {
@@ -89,68 +83,7 @@ namespace Crumpled.RobotsTxt
             return builder;
         }
 
-        private static RobotsTxtOptionsBuilder BuildStandardRules(this RobotsTxtOptionsBuilder builder, RobotsTxtOptions robotsTxtOptions, RuleType ruleType)
-        {
-            if (!robotsTxtOptions.IsProduction)
-            {
-                if (ruleType == RuleType.Allow)
-                {
-                    builder.AddSection(section =>
-                            section.AddUserAgent("SemrushBot")
-                                .Allow("/")
-                        )
-                        .AddSection(section =>
-                            section.AddUserAgent("SemrushBot-SA")
-                                .Allow("/")
-                        )
-                        .AddSection(section =>
-                            section.AddUserAgent("SemrushBot-Desktop")
-                                .Allow("/")
-                        )
-                        .AddSection(section =>
-                            section.AddUserAgent("SemrushBot-Mobile")
-                                .Allow("/")
-                        )
-                        .AddSection(section =>
-                            section.AddUserAgent("SiteAuditBot")
-                                .Allow("/")
-                        ).AddSection(section =>
-                            section.AddUserAgent("Twitterbot")
-                                .Allow("/")
-                        ).AddSection(section =>
-                            section.AddUserAgent("facebookexternalhit")
-                                .Allow("/")
-                        )
-                        .AddSection(section =>
-                            section.AddUserAgent("PowerMapper")
-                                .Allow("/")
-                        );
-                }
-                else if (ruleType == RuleType.Disallow)
-                {
-                    builder.AddSection(section =>
-                        section
-                            .AddUserAgent("*")
-                            .Disallow("/"));
-                }
-            }
-            else
-            {
-                if (ruleType == RuleType.Allow){
-                    builder
-                        .AddSection(section =>
-                        section
-                            .AddUserAgent("*")
-                            .Allow("/")
-                    );
-                } else if (ruleType == RuleType.Disallow)
-                {
-                    // nada
-                }
-            }
 
-            return builder;
-        }
 
         private static RobotsTxtOptions GetRobotsTxtOptions(this IConfiguration configuration)
         {
@@ -161,14 +94,8 @@ namespace Crumpled.RobotsTxt
             return robotsTxtOptions;
         }
 
-        private static (RobotsTxtOptions options, string sitemapUrl) GetRobotsTxtOptionsForDomain(this IConfiguration configuration, string sitemapDomain, bool isProduction)
+        private static string GetSitemapUrl(string sitemapDomain)
         {
-            var robotsTxtOptions = new RobotsTxtOptions();
-            var robotsTxtOptionsSection = GetRobotsTxtOptionsSection(configuration);
-            robotsTxtOptionsSection.Bind(robotsTxtOptions);
-
-            robotsTxtOptions.IsProduction = isProduction;
-
             if (!sitemapDomain.EndsWith("/"))
             {
                 sitemapDomain += "/";
@@ -179,9 +106,7 @@ namespace Crumpled.RobotsTxt
                 sitemapDomain = "https://" + sitemapDomain;
             }
 
-            var siteMapUrl = sitemapDomain + "sitemap.xml";
-            
-            return (robotsTxtOptions, siteMapUrl);
+            return sitemapDomain + "sitemap.xml";
         }
 
         private static IConfigurationSection GetRobotsTxtOptionsSection(this IConfiguration configuration)

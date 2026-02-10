@@ -27,39 +27,41 @@ app.UseRobotsTxt();
 ```json
 "Crumpled": {
   "RobotsTxt": {
-    "Allow": {
-      "SpecialBot2": [ "/" ]
+    "RuleSets": {
+      "Production": {
+        "Allow": {
+          "Twitterbot": [ "/" ],
+          "facebookexternalhit": [ "/" ]
+        },
+        "Disallow": {
+          "*": [ "/cdn-cgi/challenge-platform/", "/cdn-cgi/email-platform/" ]
+        }
+      },
+      "Development": {
+        "Allow": {
+          "SemrushBot": [ "/" ],
+          "SemrushBot-SA": [ "/" ],
+          "SemrushBot-Desktop": [ "/" ],
+          "SemrushBot-Mobile": [ "/" ],
+          "SiteAuditBot": [ "/" ],
+          "PowerMapper": [ "/" ]
+        },
+        "Disallow": {
+          "*": [ "/" ]
+        }
+      }
     },
-    "Disallow": {
-      "SpecialBot": [ "/" ]
-    },
-    "Domains": {
+    "Sites": {
       "Prod": {
         "HostNames": "www.mysite2.com,mysite.com,localhost:44390",
         "SiteMapDomain": "www.mysite3.com",
-        "IsProduction": true
+        "RuleSet": "Production"
       },
       "Stage": {
         "HostNames": "www.mysite.com,mysite.com,localhost:44389",
         "SiteMapDomain": "www.mysite.com",
-        "IsProduction": false
+        "RuleSet": "Development"
       }
-    }
-  }
-}
-```
-
-## appsettings.json options (legacy)
-
-```json
-"Crumpled": {
-  "RobotsTxt": {
-    "IsProduction": false,
-    "Allow": {
-      "SpecialBot2": "/"
-    },
-    "Disallow": {
-      "SpecialBot": "/"
     }
   }
 }
