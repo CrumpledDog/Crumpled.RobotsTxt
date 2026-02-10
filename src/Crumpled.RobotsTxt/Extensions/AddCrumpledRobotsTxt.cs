@@ -28,29 +28,49 @@ namespace Crumpled.RobotsTxt
                     builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(ruleSet, sitemapUrl).ForHostnames(site.Value.HostNames.Split(',')));
                 }
 
-                // Add catch-all fallback for unmatched domains - blocks all bots for safety
-                builder.Services.AddStaticRobotsTxt(robotBuilder => 
-                    robotBuilder.AddSection(section => 
-                        section.AddUserAgent("*").Disallow("/")));
-            }
-            else
-            {
-                // Check if running on Umbraco Cloud live environment
-                var isUmbracoCloudLive = Environment.GetEnvironmentVariable("UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME")?.Equals("live", StringComparison.OrdinalIgnoreCase) ?? false;
-
-                if (isUmbracoCloudLive)
+                // Add catch-all fallback for unmatched domains
+                if (!string.IsNullOrEmpty(robotsTxtOptions.DefaultRuleset))
                 {
-                    // Default to allowing all bots on Umbraco Cloud live environment
+                    var defaultRuleSet = robotsTxtOptions.RuleSets?.GetValueOrDefault(robotsTxtOptions.DefaultRuleset);
                     builder.Services.AddStaticRobotsTxt(robotBuilder => 
-                        robotBuilder.AddSection(section => 
-                            section.AddUserAgent("*").Allow("/")));
+                        robotBuilder.BuildRulesFromConfig(defaultRuleSet, null));
                 }
                 else
                 {
-                    // Default to blocking all bots when no Sites are configured
+                    // Default to blocking all bots for safety
                     builder.Services.AddStaticRobotsTxt(robotBuilder => 
                         robotBuilder.AddSection(section => 
                             section.AddUserAgent("*").Disallow("/")));
+                }
+            }
+            else
+            {
+                // Use DefaultRuleset if specified
+                if (!string.IsNullOrEmpty(robotsTxtOptions.DefaultRuleset))
+                {
+                    var defaultRuleSet = robotsTxtOptions.RuleSets?.GetValueOrDefault(robotsTxtOptions.DefaultRuleset);
+                    builder.Services.AddStaticRobotsTxt(robotBuilder => 
+                        robotBuilder.BuildRulesFromConfig(defaultRuleSet, null));
+                }
+                else
+                {
+                    // Check if running on Umbraco Cloud live environment
+                    var isUmbracoCloudLive = Environment.GetEnvironmentVariable("UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME")?.Equals("live", StringComparison.OrdinalIgnoreCase) ?? false;
+
+                    if (isUmbracoCloudLive)
+                    {
+                        // Default to allowing all bots on Umbraco Cloud live environment
+                        builder.Services.AddStaticRobotsTxt(robotBuilder => 
+                            robotBuilder.AddSection(section => 
+                                section.AddUserAgent("*").Allow("/")));
+                    }
+                    else
+                    {
+                        // Default to blocking all bots when no Sites are configured
+                        builder.Services.AddStaticRobotsTxt(robotBuilder => 
+                            robotBuilder.AddSection(section => 
+                                section.AddUserAgent("*").Disallow("/")));
+                    }
                 }
             }
 

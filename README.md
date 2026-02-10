@@ -36,6 +36,7 @@ Then add to your `program.cs`:
 
 When no `Sites` are configured, the package uses smart defaults:
 
+- **Custom Default**: If you specify a `DefaultRuleset`, that ruleset will be used as the fallback
 - **Umbraco Cloud Live Environment**: If the environment variable `UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME` equals `"live"`, all bots are allowed by default:
   ```
   User-agent: *
@@ -52,11 +53,15 @@ When no `Sites` are configured, the package uses smart defaults:
 
 ### Unmatched Domains
 
-When `Sites` are configured, any domain that doesn't match the configured `HostNames` will get a safe fallback:
-```
-User-agent: *
-Disallow: /
-```
+When `Sites` are configured, any domain that doesn't match the configured `HostNames` will get a fallback:
+
+- **Custom Default**: If you specify a `DefaultRuleset`, that ruleset will be used
+- **Otherwise**: Blocks all bots for safety:
+  ```
+  User-agent: *
+  Disallow: /
+  ```
+  
 This prevents unintended crawling of staging, preview, or other unlisted domains.
 
 ## Configuration
@@ -64,6 +69,7 @@ This prevents unintended crawling of staging, preview, or other unlisted domains
 ```json
 "Crumpled": {
   "RobotsTxt": {
+    "DefaultRuleset": "Development",
     "RuleSets": {
       "Production": {
         "Allow": {
