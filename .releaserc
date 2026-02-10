@@ -1,8 +1,8 @@
 {
   "branches": [
-    "release/v2",
+    "release/v3",
     {
-      "name": "develop/v2",
+      "name": "develop/v3",
       "prerelease": "alpha"
     }
   ],
