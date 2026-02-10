@@ -30,6 +30,7 @@ app.UseRobotsTxt();
     "RuleSets": {
       "Production": {
         "Allow": {
+          "*" : ["/"],
           "Twitterbot": [ "/" ],
           "facebookexternalhit": [ "/" ]
         },
