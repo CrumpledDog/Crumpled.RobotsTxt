@@ -1,5 +1,4 @@
 using Crumpled.RobotsTxt;
-using RobotsTxt;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 

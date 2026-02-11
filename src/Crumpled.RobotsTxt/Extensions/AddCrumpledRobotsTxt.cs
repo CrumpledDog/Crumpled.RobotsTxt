@@ -4,9 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Web.Common.ApplicationBuilder;
 
-using RobotsTxt;
+using Crumpled.RobotsTxt.Core;
 
-using static RobotsTxt.RobotsTxtOptionsBuilder;
+using static Crumpled.RobotsTxt.Core.RobotsTxtOptionsBuilder;
 
 namespace Crumpled.RobotsTxt
 {

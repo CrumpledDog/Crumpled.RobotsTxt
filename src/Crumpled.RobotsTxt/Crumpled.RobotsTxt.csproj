@@ -24,9 +24,19 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="RobotsTxtCore" Version="3.1.0-preview1" />
 		<PackageReference Include="Umbraco.Cms.Web.Website" Version="14.0.0" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Crumpled.RobotsTxt.Core\Crumpled.RobotsTxt.Core.csproj" PrivateAssets="All" />
+	</ItemGroup>
+
+	<!-- Include Core library DLL in the NuGet package -->
+	<Target Name="IncludeCoreLibraryInPackage" BeforeTargets="_GetPackageFiles" DependsOnTargets="BuildOnlySettings;ResolveReferences">
+		<ItemGroup>
+			<None Include="$(OutputPath)Crumpled.RobotsTxt.Core.dll" Pack="true" PackagePath="lib\$(TargetFramework)" Visible="false" />
+		</ItemGroup>
+	</Target>
 
 	<ItemGroup>
 		<Content Include="buildTransitive\**" PackagePath="buildTransitive" />

@@ -1,0 +1,34 @@
+# Crumpled.RobotsTxt.Core
+
+A lightweight, internal implementation of robots.txt middleware for ASP.NET Core, based on the develop branch of [RobotsTxtCore](https://github.com/karl-sjogren/robots-txt-middleware).
+
+## Why This Exists
+
+This is an internal replacement for the `RobotsTxtCore` NuGet package (v3.1.0-preview1), which has been in preview since October 2023 and appears to be stale. Rather than depending on an unmaintained external package, this project provides the same functionality as a lightweight, maintainable internal library.
+
+## Features
+
+- Fluent API for building robots.txt configurations
+- Support for multiple user agents, rules, and sitemaps
+- Environment-based configuration
+- Hostname-based routing support
+- ASP.NET Core middleware integration
+- Minimal dependencies (only ASP.NET Core)
+
+## Usage
+
+The API is identical to RobotsTxtCore:
+
+```csharp
+services.AddStaticRobotsTxt(builder =>
+    builder
+        .AddSection(section =>
+            section
+                .AddUserAgent("*")
+                .Allow("/")
+        )
+        .AddSitemap("https://example.com/sitemap.xml")
+);
+
+app.UseRobotsTxt();
+```

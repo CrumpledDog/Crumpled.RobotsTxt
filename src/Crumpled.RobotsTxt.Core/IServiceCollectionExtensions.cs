@@ -1,0 +1,68 @@
+using System.Text;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+
+namespace Crumpled.RobotsTxt.Core;
+
+public static class IServiceCollectionExtensions
+{
+    public static void AddStaticRobotsTxt(this IServiceCollection services, Func<RobotsTxtOptionsBuilder, RobotsTxtOptionsBuilder> builderFunc)
+    {
+        var builder = new RobotsTxtOptionsBuilder();
+        var options = builderFunc(builder).Build();
+
+        services.AddSingleton(options);
+
+        var previousRegistration = services.FirstOrDefault(s => s.ServiceType == typeof(IRobotsTxtProvider));
+        if (!options.Hostnames.Any())
+        {
+            if (previousRegistration?.Lifetime != ServiceLifetime.Scoped)
+            {
+                services.TryAddSingleton<IRobotsTxtProvider, StaticRobotsTxtProvider>();
+            }
+        }
+        else
+        {
+            if (previousRegistration?.Lifetime != ServiceLifetime.Scoped && previousRegistration != null)
+            {
+                services.Remove(previousRegistration);
+            }
+
+            services.TryAddScoped(CreateRobotsTxtProviderForMultipleHosts);
+        }
+    }
+
+    private static readonly RobotsTxtOptions _denyAllOptions = new RobotsTxtOptionsBuilder().DenyAll().Build();
+
+    internal static IRobotsTxtProvider CreateRobotsTxtProviderForMultipleHosts(IServiceProvider services)
+    {
+        var httpContextAccessor = services.GetRequiredService<IHttpContextAccessor>();
+        var httpContext = httpContextAccessor.HttpContext;
+
+        if (httpContext == null)
+        {
+            throw new InvalidOperationException("Could not get HttpContext from IHttpContextAccessor.");
+        }
+
+        var host = httpContext.Request.Host.Value;
+
+        var options = services.GetRequiredService<IEnumerable<RobotsTxtOptions>>().ToArray();
+        var robotsOptions = options
+            .Where(option => option.Hostnames.Any(hostname => hostname.Equals(host, StringComparison.OrdinalIgnoreCase)));
+
+        if (!robotsOptions.Any())
+        {
+            robotsOptions = options.Where(option => !option.Hostnames.Any());
+
+            if (!robotsOptions.Any())
+            {
+                robotsOptions = new[] { _denyAllOptions };
+            }
+        }
+
+        var hostEnvironment = services.GetRequiredService<IHostEnvironment>();
+        return new StaticRobotsTxtProvider(robotsOptions, hostEnvironment);
+    }
+}
