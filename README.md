@@ -1,6 +1,6 @@
 # Crumpled.RobotsTxt
 
-A flexible, configuration-driven robots.txt solution for **Umbraco v14, v15, v16 & v17**
+A flexible, configuration-driven robots.txt solution for **Umbraco v13, v14, v15, v16 & v17**
 
 <img src="crumpled-robots-txt.svg" width="150" />
 
