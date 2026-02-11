@@ -2,7 +2,6 @@ name: Verify Build
 
 env:
   PATH_TO_EXTENSION: "src/Crumpled.RobotsTxt"
-  PATH_TO_TESTSITE: "src/Crumpled.RobotsTxt.TestSite"
   DOTNET_VERSION: '10'
 
 on:
@@ -111,12 +110,8 @@ jobs:
         CSPROJ_FILE=$(find . -name "*.csproj" -not -path "*/bin/*" -not -path "*/obj/*" | head -1)
         sed -i "s|<FileVersion>\$(FileVersionNumber)</FileVersion>|<FileVersion>$FILE_VERSION</FileVersion>|" "$CSPROJ_FILE"
 
-    - name: Build Project
-      working-directory: ${{ env.PATH_TO_TESTSITE }}
-      run: dotnet build -c Release   
-
-    - name: Build sln
-      run: dotnet build ${{ github.workspace }}/*.slnx -c Release        
+    - name: Build slnx
+      run: dotnet build ${{ github.workspace }}/*.slnx -c Release
 
     - name: Pack NuGet Package
       working-directory: ${{ env.PATH_TO_EXTENSION }}

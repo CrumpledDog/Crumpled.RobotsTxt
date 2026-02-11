@@ -1,0 +1,14 @@
+{
+  "$schema": "https://marketplace.umbraco.com/umbraco-marketplace-schema.json",
+  "Title":  "Crumpled RobotsTxt" ,
+  "AuthorDetails": {
+    "Name": "Jeavon Leopold",
+    "Description": "Umbraco MVP, CMS and documentation contributor",
+    "Url": "https://github.com/Jeavon"
+  },
+  "Category": "Developer Tools",
+  "IssueTrackerUrl": "https://github.com/CrumpledDog/Crumpled.RobotsTxt/issues",
+  "LicenseTypes": [ "Free" ],
+  "PackageType": "Package",
+  "Tags": [ "Robots.txt", "Robots", "Umbraco Cloud" ]
+}

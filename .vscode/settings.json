@@ -1,5 +1,12 @@
 {
   "files.associations": {
     "appsettings*.json": "jsonc"
-  }
+  },
+  "json.schemaDownload.enable": true,
+  "json.schemas": [
+    {
+      "fileMatch": ["umbraco-marketplace.json"],
+      "url": "https://marketplace.umbraco.com/umbraco-marketplace-schema.json"
+    }
+  ]
 }

@@ -7,16 +7,24 @@
 		<StaticWebAssetBasePath>App_Plugins/Crumpled.RobotsTxt</StaticWebAssetBasePath>
 		<EnableDefaultContentItems>false</EnableDefaultContentItems>
 		<NoWarn>$(NoWarn);NU5118</NoWarn>
+		<!-- Symbol file configuration -->
+		<DebugType>portable</DebugType>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 
 	<PropertyGroup>
 		<PackageId>Crumpled.RobotsTxt</PackageId>
 		<Product>Crumpled.RobotsTxt</Product>
-		<Title>Crumpled.RobotsTxt</Title>
-		<Description>Adds the Crumpled RobotsTxt</Description>
-		<PackageTags>umbraco plugin package</PackageTags>
-		<Company>Crumpled Dog</Company>
+		<Title>Crumpled RobotsTxt</Title>
+		<Description>A flexible, configuration-driven robots.txt solution for Umbraco that protects your non-production environments from search engine indexing by default. Supports multi-site configurations, environment-aware rules, and flexible user-agent patterns with zero code setup.</Description>
+		<PackageTags>umbraco plugin package umbraco-marketplace robots.txt robots</PackageTags>
+		<Company>Crumpled Dog and Umbraco Community</Company>
 		<PackageIcon>crumpled-robots-txt.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<Authors>Crumpled Dog and Umbraco Community</Authors>
+		<RepositoryUrl>https://github.com/CrumpledDog/Crumpled.RobotsTxt</RepositoryUrl>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -31,10 +39,11 @@
 		<ProjectReference Include="..\Crumpled.RobotsTxt.Core\Crumpled.RobotsTxt.Core.csproj" PrivateAssets="All" />
 	</ItemGroup>
 
-	<!-- Include Core library DLL in the NuGet package -->
+	<!-- Include Core library DLL and PDB in the NuGet package -->
 	<Target Name="IncludeCoreLibraryInPackage" BeforeTargets="_GetPackageFiles" DependsOnTargets="BuildOnlySettings;ResolveReferences">
 		<ItemGroup>
 			<None Include="$(OutputPath)Crumpled.RobotsTxt.Core.dll" Pack="true" PackagePath="lib\$(TargetFramework)" Visible="false" />
+			<None Include="$(OutputPath)Crumpled.RobotsTxt.Core.pdb" Pack="true" PackagePath="lib\$(TargetFramework)" Visible="false" />
 		</ItemGroup>
 	</Target>
 
@@ -49,6 +58,14 @@
 	    <Pack>True</Pack>
 	    <PackagePath>\</PackagePath>
 	  </None>
+	  <None Update="README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+      <None Include="..\..\LICENSE">
+        <Pack>True</Pack>
+        <PackagePath>\</PackagePath>
+      </None>	  
 	</ItemGroup>
 
 </Project>

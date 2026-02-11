@@ -3,6 +3,8 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<!-- Generate debug symbols -->
+		<DebugType>portable</DebugType>
 	</PropertyGroup>
 
 	<ItemGroup>

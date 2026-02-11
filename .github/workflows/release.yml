@@ -2,11 +2,16 @@ name: Build and Package
 
 env:
   PATH_TO_EXTENSION: "src/Crumpled.RobotsTxt"
-  PATH_TO_TESTSITE: "src/Crumpled.RobotsTxt.TestSite"
   DOTNET_VERSION: '10'
 
 on:
- workflow_dispatch:
+  workflow_dispatch:
+    inputs:
+      publish_to_nuget:
+        description: 'Publish to nuget.org'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   setup:
@@ -92,17 +97,13 @@ jobs:
         CSPROJ_FILE=$(find . -name "*.csproj" -not -path "*/bin/*" -not -path "*/obj/*" | head -1)
         sed -i "s|<FileVersion>\$(FileVersionNumber)</FileVersion>|<FileVersion>$FILE_VERSION</FileVersion>|" "$CSPROJ_FILE"
 
-    - name: Build Project
-      working-directory: ${{ env.PATH_TO_TESTSITE }}
-      run: dotnet build -c Release   
-
-    - name: Build sln
+    - name: Build slnx
       run: dotnet build ${{ github.workspace }}/*.slnx -c Release
 
     - name: Pack NuGet Package
       working-directory: ${{ env.PATH_TO_EXTENSION }}
       run: dotnet pack --configuration Release /p:PackageVersion=${{ needs.setup.outputs.semver }}
-
+    
     - name: Login
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
       run: dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/CrumpledDog/index.json"
@@ -110,6 +111,23 @@ jobs:
     - name: Push NuGet Package
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
       run: dotnet nuget push "${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.nupkg"  --api-key ${{ secrets.GITHUB_TOKEN }} --source "github" --skip-duplicate
+
+    - name: Push MyGet Package
+      if: needs.setup.outputs.new_release_published == 'true'
+      env:
+        MYGET_API_KEY: ${{ secrets.MYGET_API_KEY }}
+      run: |
+        if [ -n "$MYGET_API_KEY" ]; then
+          dotnet nuget push "${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.nupkg" --api-key $MYGET_API_KEY --source https://www.myget.org/F/umbraco-packages/api/v2/package --skip-duplicate
+        else
+          echo "MYGET_API_KEY is not set, skipping MyGet push"
+        fi
+
+    - name: Push to Nuget.org
+      if: ${{ needs.setup.outputs.new_release_published == 'true' && github.event.inputs.publish_to_nuget == 'true' && startsWith(github.ref, 'refs/heads/release/') && !contains(needs.setup.outputs.semver, '-') }}
+      run: |
+        dotnet nuget push "${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        dotnet nuget push "${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.snupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
     
     - name: Merge release branch to develop
       if: ${{ needs.setup.outputs.new_release_published == 'true' && startsWith(github.ref, 'refs/heads/release/') }}
