@@ -138,8 +138,13 @@ namespace Crumpled.RobotsTxt
             return robotsTxtOptions;
         }
 
-        private static string GetSitemapUrl(string sitemapDomain)
+        private static string? GetSitemapUrl(string? sitemapDomain)
         {
+            if (string.IsNullOrWhiteSpace(sitemapDomain))
+            {
+                return null;
+            }
+
             if (!sitemapDomain.EndsWith("/"))
             {
                 sitemapDomain += "/";

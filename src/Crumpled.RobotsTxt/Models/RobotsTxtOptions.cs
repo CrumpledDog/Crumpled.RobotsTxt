@@ -18,7 +18,7 @@
     public class SiteItem
     {
         public required string HostNames { get; set; }
-        public required string SiteMapDomain { get; set; }
+        public string? SiteMapDomain { get; set; }
         public required string RuleSet { get; set; }
     }
 }
