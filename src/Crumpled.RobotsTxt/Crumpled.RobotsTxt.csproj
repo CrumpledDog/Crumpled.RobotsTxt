@@ -43,7 +43,7 @@
 	<Target Name="IncludeCoreLibraryInPackage" BeforeTargets="_GetPackageFiles" DependsOnTargets="BuildOnlySettings;ResolveReferences">
 		<ItemGroup>
 			<None Include="$(OutputPath)Crumpled.RobotsTxt.Core.dll" Pack="true" PackagePath="lib\$(TargetFramework)" Visible="false" />
-			<None Include="$(OutputPath)Crumpled.RobotsTxt.Core.pdb" Pack="true" PackagePath="lib\$(TargetFramework)" Visible="false" />
+			<_TargetPathsToSymbols Include="$(OutputPath)Crumpled.RobotsTxt.Core.pdb" TargetFramework="$(TargetFramework)" IsSymbolPackageItem="true" />
 		</ItemGroup>
 	</Target>
 
