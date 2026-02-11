@@ -4,7 +4,14 @@
   "AuthorDetails": {
     "Name": "Jeavon Leopold",
     "Description": "Umbraco MVP, CMS and documentation contributor",
-    "Url": "https://github.com/Jeavon"
+    "Url": "https://github.com/Jeavon",
+    "ImageUrl": "https://github.com/jeavon.png",
+    "Contributors": [
+      {
+        "Name": "Marc Goodson",
+        "Url": "https://github.com/marcemarc"
+      }
+    ]
   },
   "Category": "Developer Tools",
   "IssueTrackerUrl": "https://github.com/CrumpledDog/Crumpled.RobotsTxt/issues",
