@@ -137,8 +137,8 @@ jobs:
 
     - name: Run Integration Tests
       run: |
-        dotnet test tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj --configuration Release --framework net8.0 --logger "trx;LogFileName=test-results-net8.0.trx" --logger "console;verbosity=normal"
-        dotnet test tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj --configuration Release --framework net10.0 --logger "trx;LogFileName=test-results-net10.0.trx" --logger "console;verbosity=normal"
+        dotnet test tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj --configuration Release --framework net8.0 --logger "trx;LogFileName=test-results-net8.0.trx" --logger "GitHubActions" --logger "console;verbosity=normal"
+        dotnet test tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj --configuration Release --framework net10.0 --logger "trx;LogFileName=test-results-net10.0.trx" --logger "GitHubActions" --logger "console;verbosity=normal"
 
     - name: Publish Test Results (Umbraco v13)
       uses: dorny/test-reporter@v1
