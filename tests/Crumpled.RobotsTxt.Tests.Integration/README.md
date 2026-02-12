@@ -60,10 +60,8 @@ dotnet test tests/Crumpled.RobotsTxt.Tests.Integration --logger "console;verbosi
 - Tests safe default behavior (blocks all bots when no sites configured)
 
 ### Test Isolation
- per factory: ~15-20 seconds (Umbraco installation)
-- Subsequent tests in same class: Fast (reuses same Umbraco instance)
-- Cloud tests run sequentially to avoid environment variable conflicts
-- Total test suite: ~25-30 secondss to prevent parallel execution:
+
+Cloud tests use xUnit test collections to prevent parallel execution:
 - `[Collection("CloudLive")]` - Isolates Cloud Live tests
 - `[Collection("CloudDev")]` - Isolates Cloud Dev tests
 
@@ -79,9 +77,29 @@ Tests configure different sites and rulesets:
 
 ### Performance
 
-- First test run: ~15-20 seconds (Umbraco installation)
-- Subsequent tests: Fast (reuses same Umbraco instance)
+**Seed Database Optimization:**
+
+To minimize test execution time (~5 seconds vs ~25 seconds), the project includes a pre-initialized SQLite database (`Umbraco.seed.sqlite.db`) that is committed to source control. This seed database contains a fully installed Umbraco instance, eliminating the 15-20 second installation time on every test run.
+
+The seed database is:
+- Copied from the TestSite project's working Umbraco database
+- Committed to the tests project for fast CI/CD execution
+- Automatically copied to each test's temporary database location
+- Isolated per test run (each factory uses a unique temp database)
+
+**Test Execution Times:**
+- With seed database: ~5-6 seconds for all 10 tests
+- Without seed database: ~25-30 seconds (Umbraco must install 3 times)
 - Database cleanup: Automatic on dispose
+
+**Updating the Seed Database:**
+
+If the Umbraco schema changes or you need to regenerate the seed database:
+
+```bash
+# Copy the latest working database from TestSite
+Copy-Item "src\Crumpled.RobotsTxt.TestSite\umbraco\Data\Umbraco.sqlite.db" "tests\Crumpled.RobotsTxt.Tests.Integration\Umbraco.seed.sqlite.db"
+```
 
 ## CI/CD Integration
 

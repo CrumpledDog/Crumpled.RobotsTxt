@@ -11,10 +11,17 @@ namespace Crumpled.RobotsTxt.Tests.Integration;
 public class UmbracoCloudLiveWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _dbPath;
+    private static readonly string _seedDbPath = Path.Combine(AppContext.BaseDirectory, "Umbraco.seed.sqlite.db");
 
     public UmbracoCloudLiveWebApplicationFactory()
     {
         _dbPath = Path.Combine(Path.GetTempPath(), $"UmbracoCloudLiveTest_{Guid.NewGuid()}.db");
+        
+        // Copy committed seed database to test location for fast startup (if it exists)
+        if (File.Exists(_seedDbPath))
+        {
+            File.Copy(_seedDbPath, _dbPath, true);
+        }
         
         // Set the Umbraco Cloud environment variable
         Environment.SetEnvironmentVariable("UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME", "live");

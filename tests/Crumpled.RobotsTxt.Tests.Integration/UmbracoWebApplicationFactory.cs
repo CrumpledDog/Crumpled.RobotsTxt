@@ -7,11 +7,18 @@ namespace Crumpled.RobotsTxt.Tests.Integration;
 public class UmbracoWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _dbPath;
+    private static readonly string _seedDbPath = Path.Combine(AppContext.BaseDirectory, "Umbraco.seed.sqlite.db");
 
     public UmbracoWebApplicationFactory()
     {
-        // Create a unique SQLite database file for each test run
+        // Use a unique test database path
         _dbPath = Path.Combine(Path.GetTempPath(), $"UmbracoTest_{Guid.NewGuid()}.db");
+        
+        // Copy committed seed database to test location for fast startup (if it exists)
+        if (File.Exists(_seedDbPath))
+        {
+            File.Copy(_seedDbPath, _dbPath, true);
+        }
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
