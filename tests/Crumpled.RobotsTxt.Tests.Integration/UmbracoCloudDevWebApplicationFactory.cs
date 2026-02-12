@@ -57,6 +57,10 @@ public class UmbracoCloudDevWebApplicationFactory : WebApplicationFactory<Progra
                 
                 // Speed up startup
                 ["Umbraco:CMS:Content:Notifications:MaxProcessingDelayMilliseconds"] = "0",
+                
+                // Suppress Serilog Fatal logs from shutdown
+                ["Serilog:MinimumLevel:Override:Microsoft.Extensions.Hosting"] = "6",
+                ["Serilog:MinimumLevel:Override:Microsoft.Hosting.Lifetime"] = "6",
             };
 
             config.AddInMemoryCollection(testConfig!);
