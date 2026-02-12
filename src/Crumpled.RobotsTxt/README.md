@@ -80,26 +80,23 @@ Configure different robots.txt rules for different environments and domains usin
 ```json
 "Crumpled": {
   "RobotsTxt": {
-    "DefaultRuleset": "Development",
-    "RuleSets": {
+    "DefaultRuleset": "NonProduction",
+    "RuleSets": { // There can be multiple rulesets for complex scenarios!
       "Production": {
         "Allow": {
-          "*" : ["/"],
-          "Twitterbot": [ "/" ],
-          "facebookexternalhit": [ "/" ]
+          "*" : ["/"]
         },
         "Disallow": {
           "*": [ "/cdn-cgi/challenge-platform/", "/cdn-cgi/email-platform/" ]
         }
       },
-      "Development": {
+      "NonProduction": { 
         "Allow": {
           "SemrushBot": [ "/" ],
           "SemrushBot-SA": [ "/" ],
           "SemrushBot-Desktop": [ "/" ],
           "SemrushBot-Mobile": [ "/" ],
-          "SiteAuditBot": [ "/" ],
-          "PowerMapper": [ "/" ]
+          "SiteAuditBot": [ "/" ]
         },
         "Disallow": {
           "*": [ "/" ]
@@ -108,14 +105,24 @@ Configure different robots.txt rules for different environments and domains usin
     },
     "Sites": {
       "Prod": {
-        "HostNames": "www.mysite2.com,mysite.com,localhost:44390",
-        "SiteMapDomain": "www.mysite3.com",
+        "HostNames": "www.mysite.com",
+        "SiteMapDomain": "www.mysite.com",
         "RuleSet": "Production"
       },
+      "AnotherProd": {
+        "HostNames": "www.anothermysite.com",
+        "SiteMapDomain": "www.anothermysite.com",
+        "RuleSet": "Production" // or can define alternate production ruleset for this site
+      },
       "Stage": {
-        "HostNames": "www.mysite.com,mysite.com,localhost:44389",
-        "SiteMapDomain": "www.mysite.com",
-        "RuleSet": "Development"
+        "HostNames": "mysite-staging-uksouth01.umbraco.io,staging.mysite.com", 
+        "SiteMapDomain": "staging.mysite.com",
+        "RuleSet": "NonProduction"
+      },
+      "Dev": {
+        "HostNames": "mysite-dev-uksouth01.umbraco.io,dev.mysite.com",
+        "SiteMapDomain": "dev.mysite.com",
+        "RuleSet": "NonProduction"
       }
     }
   }
