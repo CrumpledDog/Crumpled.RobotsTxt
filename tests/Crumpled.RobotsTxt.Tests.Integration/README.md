@@ -79,26 +79,34 @@ Tests configure different sites and rulesets:
 
 **Seed Database Optimization:**
 
-To minimize test execution time (~5 seconds vs ~25 seconds), the project includes a pre-initialized SQLite database (`Umbraco.seed.sqlite.db`) that is committed to source control. This seed database contains a fully installed Umbraco instance, eliminating the 15-20 second installation time on every test run.
+To minimize test execution time (~5-7 seconds vs ~25-30 seconds), the project includes pre-initialized SQLite databases that are committed to source control:
+- `Umbraco.seed.v13.sqlite.db` - Used by net8.0 tests (Umbraco v13)
+- `Umbraco.seed.v17.sqlite.db` - Used by net10.0 tests (Umbraco v17)
 
-The seed database is:
-- Copied from the TestSite project's working Umbraco database
+These seed databases contain fully installed Umbraco instances, eliminating the 15-20 second installation time on every test run.
+
+The seed databases are:
+- Version-specific for Umbraco v13 and v17
 - Committed to the tests project for fast CI/CD execution
-- Automatically copied to each test's temporary database location
+- Automatically selected based on target framework (conditional compilation)
+- Copied to each test's temporary database location
 - Isolated per test run (each factory uses a unique temp database)
 
 **Test Execution Times:**
-- With seed database: ~5-6 seconds for all 10 tests
-- Without seed database: ~25-30 seconds (Umbraco must install 3 times)
-- Database cleanup: Automatic on dispose
+- With seed databases: ~5-7 seconds for all 10 tests (per framework)
+- Without seed databases: ~25-30 seconds (Umbraco must install 3 times)
+- Total for both frameworks: ~12-18 seconds vs ~50-60 seconds
 
-**Updating the Seed Database:**
+**Updating the Seed Databases:**
 
-If the Umbraco schema changes or you need to regenerate the seed database:
+If the Umbraco schema changes or you need to regenerate the seed databases:
 
 ```bash
-# Copy the latest working database from TestSite
-Copy-Item "src\Crumpled.RobotsTxt.TestSite\umbraco\Data\Umbraco.sqlite.db" "tests\Crumpled.RobotsTxt.Tests.Integration\Umbraco.seed.sqlite.db"
+# For Umbraco v13 (from TestSite13)
+Copy-Item "src\Crumpled.RobotsTxt.TestSite13\umbraco\Data\Umbraco.sqlite.db" "tests\Crumpled.RobotsTxt.Tests.Integration\Umbraco.seed.v13.sqlite.db"
+
+# For Umbraco v17 (from TestSite)
+Copy-Item "src\Crumpled.RobotsTxt.TestSite\umbraco\Data\Umbraco.sqlite.db" "tests\Crumpled.RobotsTxt.Tests.Integration\Umbraco.seed.v17.sqlite.db"
 ```
 
 ## CI/CD Integration
