@@ -10,7 +10,8 @@ This repository contains:
 
 - **[Crumpled.RobotsTxt](src/Crumpled.RobotsTxt/)** - Main Umbraco package for managing robots.txt configuration ([README](src/Crumpled.RobotsTxt/README.md))
 - **[Crumpled.RobotsTxt.Core](src/Crumpled.RobotsTxt.Core/)** - Internal ASP.NET Core robots.txt middleware implementation
-- **[Crumpled.RobotsTxt.TestSite](src/Crumpled.RobotsTxt.TestSite/)** - Test Umbraco site for development
+- **[Crumpled.RobotsTxt.TestSite](src/Crumpled.RobotsTxt.TestSite/)** - Test Umbraco site for development (Umbraco v14+)
+- **[Crumpled.RobotsTxt.TestSite13](src/Crumpled.RobotsTxt.TestSite13/)** - Test Umbraco site for v13 compatibility
 
 ## Installation
 
@@ -31,11 +32,15 @@ dotnet add package Crumpled.RobotsTxt
 
 ## Development
 
-**[Crumpled.RobotsTxt.TestSite](src/Crumpled.RobotsTxt.TestSite/)** - Unattended installation, credentials (not that you really need them) are set in [appsettings.Development.json](src/Crumpled.RobotsTxt.TestSite/appsettings.Development.json)
+### Test Sites
+
+**[Crumpled.RobotsTxt.TestSite](src/Crumpled.RobotsTxt.TestSite/)** - Umbraco v17 test site with unattended installation. Credentials (not that you really need them) are set in [appsettings.Development.json](src/Crumpled.RobotsTxt.TestSite/appsettings.Development.json)
+
+**[Crumpled.RobotsTxt.TestSite13](src/Crumpled.RobotsTxt.TestSite13/)** - Umbraco v13 test site for backward compatibility testing
 
 ### Launch Profiles
 
-The test site includes two launch profiles:
+The main test site includes three launch profiles:
 
 **1. `Crumpled.RobotsTxt.TestSite` (Development Profile)**
 - Tests multi-site robots.txt functionality
@@ -45,13 +50,21 @@ The test site includes two launch profiles:
   - `https://localhost:44391` - Unmatched domain (tests fallback behavior)
 - Each URL serves different robots.txt content based on hostname configuration
 
-**2. `Crumpled.RobotsTxt.TestSiteCloud` (Umbraco Cloud Simulation)**
+**2. `Crumpled.RobotsTxt.TestSiteLiveCloud` (Umbraco Cloud Live Simulation)**
 - Tests Umbraco Cloud live environment detection
 - Sets `UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME=live`
 - Single URL: `https://localhost:44392`
+- Environment: `CloudTest`
 - Demonstrates Cloud-specific default behavior (allows all bots when no sites configured)
 
-### Running the Test Site
+**3. `Crumpled.RobotsTxt.TestSiteDevCloud` (Umbraco Cloud Dev Simulation)**
+- Tests Umbraco Cloud development environment detection
+- Sets `UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME=development`
+- Single URL: `https://localhost:44393`
+- Environment: `CloudTest`
+- Demonstrates Cloud dev environment behavior (blocks all bots by default)
+
+### Running the Test Sites
 
 Run with the default profile:
 ```bash
@@ -60,5 +73,11 @@ dotnet run --project src/Crumpled.RobotsTxt.TestSite
 
 Or specify a launch profile:
 ```bash
-dotnet run --project src/Crumpled.RobotsTxt.TestSite --launch-profile Crumpled.RobotsTxt.TestSiteCloud
+dotnet run --project src/Crumpled.RobotsTxt.TestSite --launch-profile Crumpled.RobotsTxt.TestSiteLiveCloud
+dotnet run --project src/Crumpled.RobotsTxt.TestSite --launch-profile Crumpled.RobotsTxt.TestSiteDevCloud
+```
+
+Run the Umbraco v13 test site:
+```bash
+dotnet run --project src/Crumpled.RobotsTxt.TestSite13
 ```
