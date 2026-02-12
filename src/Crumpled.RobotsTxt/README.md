@@ -10,7 +10,7 @@ A flexible, configuration-driven robots.txt solution for Umbraco that protects y
 - **🌍 Multi-Site & Environment-Aware** - Configure different robots.txt rules for different domains/hostnames and environments (Production, Development, Staging, etc.)
 - **📝 Flexible Rule Configuration** - Define reusable rulesets with Allow/Disallow patterns for different user agents
 - **🗺️ Sitemap Integration** - Include sitemap URLs per site
-- **☁️ Umbraco Cloud Ready** - Defaults for Umbraco Cloud environments
+- **☁️ Umbraco Cloud Ready** - Default behaviour designed for Umbraco Cloud - Perfect for hiding those often overlooked *.umbraco.io environment domains.
 - **⚙️ Zero Code Setup** - Works out of the box with auto-registration
 
 ## Install NuGet package
