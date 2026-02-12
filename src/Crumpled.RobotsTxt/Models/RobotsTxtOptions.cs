@@ -4,6 +4,7 @@
     {
         public const string RobotsTxtSection = "RobotsTxt";
         public bool DisableComposer { get; set; } = false;
+        public string? DefaultRuleset { get; set; }
         public Dictionary<string, RuleSet>? RuleSets { get; set; }
         public Dictionary<string, SiteItem>? Sites { get; set; } = null;
     }
@@ -17,7 +18,7 @@
     public class SiteItem
     {
         public required string HostNames { get; set; }
-        public required string SiteMapDomain { get; set; }
+        public string? SiteMapDomain { get; set; }
         public required string RuleSet { get; set; }
     }
 }

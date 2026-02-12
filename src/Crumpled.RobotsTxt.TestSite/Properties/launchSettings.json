@@ -10,7 +10,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-     "Crumpled.RobotsTxt.TestSiteCloud": {
+     "Crumpled.RobotsTxt.TestSiteLiveCloud": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
@@ -19,6 +19,16 @@
         "ASPNETCORE_ENVIRONMENT": "CloudTest",
         "UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME" : "live"
       }
-    }
+    },
+     "Crumpled.RobotsTxt.TestSiteDevCloud": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:44393",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "CloudTest",
+        "UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME" : "development"
+      }
+    }    
   }
 }

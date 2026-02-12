@@ -2,11 +2,16 @@ name: Build and Package
 
 env:
   PATH_TO_EXTENSION: "src/Crumpled.RobotsTxt"
-  PATH_TO_TESTSITE: "src/Crumpled.RobotsTxt.TestSite"
   DOTNET_VERSION: '10'
 
 on:
- workflow_dispatch:
+  workflow_dispatch:
+    inputs:
+      publish_to_nuget:
+        description: 'Publish to nuget.org'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   setup:
@@ -72,9 +77,10 @@ jobs:
           nuget-cache-${{ runner.os }}-nuget-
 
     - name: Update Version Files
-      working-directory: ${{ env.PATH_TO_EXTENSION }}
       run: |
-        jq '.version = "${{ needs.setup.outputs.semver }}"' wwwroot/umbraco-package.json > temp.json && mv temp.json wwwroot/umbraco-package.json
+
+        jq '.version = "${{ needs.setup.outputs.semver }}"' ${{ env.PATH_TO_EXTENSION }}/wwwroot/umbraco-package.json > temp.json && mv temp.json ${{ env.PATH_TO_EXTENSION }}/wwwroot/umbraco-package.json
+        echo "Updated version in ${{ env.PATH_TO_EXTENSION }}/wwwroot/umbraco-package.json to ${{ needs.setup.outputs.semver }}"
 
         # Convert semantic version to numeric file version (e.g., 2.0.0-alpha.1 -> 2.0.0.1)
         SEMVER="${{ needs.setup.outputs.semver }}"
@@ -88,21 +94,51 @@ jobs:
           FILE_VERSION="${SEMVER}.0"
         fi
         
-        # Find and update csproj file
-        CSPROJ_FILE=$(find . -name "*.csproj" -not -path "*/bin/*" -not -path "*/obj/*" | head -1)
-        sed -i "s|<FileVersion>\$(FileVersionNumber)</FileVersion>|<FileVersion>$FILE_VERSION</FileVersion>|" "$CSPROJ_FILE"
+        # Update both main and core project files
+        update_file_version() {
+          local CSPROJ_PATH=$1
+          local FILE_VERSION=$2
+          local INFORMATIONAL_VERSION=$3
+          
+          if [ ! -f "$CSPROJ_PATH" ]; then
+            echo "Warning: $CSPROJ_PATH not found"
+            return
+          fi
+          
+          # Check if FileVersion element exists
+          if grep -q "<FileVersion>" "$CSPROJ_PATH"; then
+            # Update existing FileVersion
+            sed -i "s|<FileVersion>.*</FileVersion>|<FileVersion>$FILE_VERSION</FileVersion>|" "$CSPROJ_PATH"
+            echo "Updated FileVersion in $CSPROJ_PATH to $FILE_VERSION"
+          else
+            # Add FileVersion to the first PropertyGroup
+            sed -i "0,/<PropertyGroup>/s|<PropertyGroup>|<PropertyGroup>\n\t\t<FileVersion>$FILE_VERSION</FileVersion>|" "$CSPROJ_PATH"
+            echo "Added FileVersion to $CSPROJ_PATH with value $FILE_VERSION"
+          fi
+          
+          # Check if InformationalVersion element exists
+          if grep -q "<InformationalVersion>" "$CSPROJ_PATH"; then
+            # Update existing InformationalVersion
+            sed -i "s|<InformationalVersion>.*</InformationalVersion>|<InformationalVersion>$INFORMATIONAL_VERSION</InformationalVersion>|" "$CSPROJ_PATH"
+            echo "Updated InformationalVersion in $CSPROJ_PATH to $INFORMATIONAL_VERSION"
+          else
+            # Add InformationalVersion to the first PropertyGroup
+            sed -i "0,/<PropertyGroup>/s|<PropertyGroup>|<PropertyGroup>\n\t\t<InformationalVersion>$INFORMATIONAL_VERSION</InformationalVersion>|" "$CSPROJ_PATH"
+            echo "Added InformationalVersion to $CSPROJ_PATH with value $INFORMATIONAL_VERSION"
+          fi
+        }
+        
+        # Update both project files
+        update_file_version "src/Crumpled.RobotsTxt/Crumpled.RobotsTxt.csproj" "$FILE_VERSION" "$SEMVER"
+        update_file_version "src/Crumpled.RobotsTxt.Core/Crumpled.RobotsTxt.Core.csproj" "$FILE_VERSION" "$SEMVER"
 
-    - name: Build Project
-      working-directory: ${{ env.PATH_TO_TESTSITE }}
-      run: dotnet build -c Release   
-
-    - name: Build sln
+    - name: Build slnx
       run: dotnet build ${{ github.workspace }}/*.slnx -c Release
 
     - name: Pack NuGet Package
       working-directory: ${{ env.PATH_TO_EXTENSION }}
       run: dotnet pack --configuration Release /p:PackageVersion=${{ needs.setup.outputs.semver }}
-
+    
     - name: Login
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
       run: dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/CrumpledDog/index.json"
@@ -110,6 +146,23 @@ jobs:
     - name: Push NuGet Package
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
       run: dotnet nuget push "${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.nupkg"  --api-key ${{ secrets.GITHUB_TOKEN }} --source "github" --skip-duplicate
+
+    - name: Push MyGet Package
+      if: needs.setup.outputs.new_release_published == 'true'
+      env:
+        MYGET_API_KEY: ${{ secrets.MYGET_API_KEY }}
+      run: |
+        if [ -n "$MYGET_API_KEY" ]; then
+          dotnet nuget push "${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.nupkg" --api-key $MYGET_API_KEY --source https://www.myget.org/F/umbraco-packages/api/v2/package --skip-duplicate
+        else
+          echo "MYGET_API_KEY is not set, skipping MyGet push"
+        fi
+
+    - name: Push to Nuget.org
+      if: ${{ needs.setup.outputs.new_release_published == 'true' && github.event.inputs.publish_to_nuget == 'true' && startsWith(github.ref, 'refs/heads/release/') && !contains(needs.setup.outputs.semver, '-') }}
+      run: |
+        dotnet nuget push "${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        dotnet nuget push "${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.snupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
     
     - name: Merge release branch to develop
       if: ${{ needs.setup.outputs.new_release_published == 'true' && startsWith(github.ref, 'refs/heads/release/') }}

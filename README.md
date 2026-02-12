@@ -1,106 +1,83 @@
 # Crumpled.RobotsTxt
 
-This package adds the Crumpled Robots Txt
+A flexible, configuration-driven robots.txt solution for **Umbraco v13, v14, v15, v16 & v17**
 
 <img src="crumpled-robots-txt.svg" width="150" />
 
-## Install NuGet package
+## Repository Structure
+
+This repository contains:
+
+- **[Crumpled.RobotsTxt](src/Crumpled.RobotsTxt/)** - Main Umbraco package for managing robots.txt configuration ([README](src/Crumpled.RobotsTxt/README.md))
+- **[Crumpled.RobotsTxt.Core](src/Crumpled.RobotsTxt.Core/)** - Internal ASP.NET Core robots.txt middleware implementation
+- **[Crumpled.RobotsTxt.TestSite](src/Crumpled.RobotsTxt.TestSite/)** - Test Umbraco site for development (Umbraco v14+)
+- **[Crumpled.RobotsTxt.TestSite13](src/Crumpled.RobotsTxt.TestSite13/)** - Test Umbraco site for v13 compatibility
+
+## Installation
 
 ```console
-dotnet add package Crumpled.RobotsTxt --prerelease
+dotnet add package Crumpled.RobotsTxt
 ```
 
-## Setup
+📖 **[View Full Documentation & Configuration Guide](src/Crumpled.RobotsTxt/README.md)**
 
-The package automatically registers itself via a Umbraco Composer. No code changes required!
+## Key Features
 
-### Manual Registration (Advanced)
+- 🛡️ **Safe by Default** - Blocks all bots by default to prevent accidental indexing
+- 🌍 **Multi-Site & Environment-Aware** - Different rules per domain/environment
+- 📝 **Flexible Configuration** - Reusable rulesets via appsettings.json
+- 🗺️ **Sitemap Integration** - Automatic sitemap URL generation
+- ⚙️ **Zero Code Setup** - Auto-registration via Umbraco Composer
 
-If you prefer to manually register the package in `program.cs`, disable the composer:
 
-```json
-"Crumpled": {
-  "RobotsTxt": {
-    "DisableComposer": true
-  }
-}
+## Development
+
+### Test Sites
+
+**[Crumpled.RobotsTxt.TestSite](src/Crumpled.RobotsTxt.TestSite/)** - Umbraco v17 test site with unattended installation. Credentials (not that you really need them) are set in [appsettings.Development.json](src/Crumpled.RobotsTxt.TestSite/appsettings.Development.json)
+
+**[Crumpled.RobotsTxt.TestSite13](src/Crumpled.RobotsTxt.TestSite13/)** - Umbraco v13 test site for backward compatibility testing
+
+### Launch Profiles
+
+The main test site includes three launch profiles:
+
+**1. `Crumpled.RobotsTxt.TestSite` (Development Profile)**
+- Tests multi-site robots.txt functionality
+- Listens on three ports simultaneously:
+  - `https://localhost:44389` - "Stage" site (Development ruleset)
+  - `https://localhost:44390` - "Prod" site (Production ruleset)
+  - `https://localhost:44391` - Unmatched domain (tests fallback behavior)
+- Each URL serves different robots.txt content based on hostname configuration
+
+**2. `Crumpled.RobotsTxt.TestSiteLiveCloud` (Umbraco Cloud Live Simulation)**
+- Tests Umbraco Cloud live environment detection
+- Sets `UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME=live`
+- Single URL: `https://localhost:44392`
+- Environment: `CloudTest`
+- Demonstrates Cloud-specific default behavior (allows all bots when no sites configured)
+
+**3. `Crumpled.RobotsTxt.TestSiteDevCloud` (Umbraco Cloud Dev Simulation)**
+- Tests Umbraco Cloud development environment detection
+- Sets `UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME=development`
+- Single URL: `https://localhost:44393`
+- Environment: `CloudTest`
+- Demonstrates Cloud dev environment behavior (blocks all bots by default)
+
+### Running the Test Sites
+
+Run with the default profile:
+```bash
+dotnet run --project src/Crumpled.RobotsTxt.TestSite
 ```
 
-Then add to your `program.cs`:
-
-```C#
-.AddCrumpledRobotsTxt()
+Or specify a launch profile:
+```bash
+dotnet run --project src/Crumpled.RobotsTxt.TestSite --launch-profile Crumpled.RobotsTxt.TestSiteLiveCloud
+dotnet run --project src/Crumpled.RobotsTxt.TestSite --launch-profile Crumpled.RobotsTxt.TestSiteDevCloud
 ```
 
-## Default Behavior
-
-When no `Sites` are configured, the package uses smart defaults:
-
-- **Umbraco Cloud Live Environment**: If the environment variable `UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME` equals `"live"`, all bots are allowed by default:
-  ```
-  User-agent: *
-  Allow: /
-  ```
-
-- **All Other Environments**: All bots are blocked by default for safety:
-  ```
-  User-agent: *
-  Disallow: /
-  ```
-
-⚠️ **Note:** Once you configure `Sites`, these defaults are ignored and your custom `RuleSets` take full control.
-
-### Unmatched Domains
-
-When `Sites` are configured, any domain that doesn't match the configured `HostNames` will get a safe fallback:
-```
-User-agent: *
-Disallow: /
-```
-This prevents unintended crawling of staging, preview, or other unlisted domains.
-
-## Configuration
-
-```json
-"Crumpled": {
-  "RobotsTxt": {
-    "RuleSets": {
-      "Production": {
-        "Allow": {
-          "*" : ["/"],
-          "Twitterbot": [ "/" ],
-          "facebookexternalhit": [ "/" ]
-        },
-        "Disallow": {
-          "*": [ "/cdn-cgi/challenge-platform/", "/cdn-cgi/email-platform/" ]
-        }
-      },
-      "Development": {
-        "Allow": {
-          "SemrushBot": [ "/" ],
-          "SemrushBot-SA": [ "/" ],
-          "SemrushBot-Desktop": [ "/" ],
-          "SemrushBot-Mobile": [ "/" ],
-          "SiteAuditBot": [ "/" ],
-          "PowerMapper": [ "/" ]
-        },
-        "Disallow": {
-          "*": [ "/" ]
-        }
-      }
-    },
-    "Sites": {
-      "Prod": {
-        "HostNames": "www.mysite2.com,mysite.com,localhost:44390",
-        "SiteMapDomain": "www.mysite3.com",
-        "RuleSet": "Production"
-      },
-      "Stage": {
-        "HostNames": "www.mysite.com,mysite.com,localhost:44389",
-        "SiteMapDomain": "www.mysite.com",
-        "RuleSet": "Development"
-      }
-    }
-  }
-}
+Run the Umbraco v13 test site:
+```bash
+dotnet run --project src/Crumpled.RobotsTxt.TestSite13
 ```
