@@ -37,12 +37,13 @@ public class UmbracoCloudLiveWebApplicationFactory : WebApplicationFactory<Progr
         // Suppress noisy shutdown errors in tests
         builder.ConfigureLogging(logging =>
         {
-            logging.AddFilter("Microsoft.Extensions.Hosting", LogLevel.None);
+            logging.SetMinimumLevel(LogLevel.None);
             logging.AddFilter((category, level) => 
             {
-                // Suppress shutdown-related errors
-                if (category?.Contains("ApplicationLifetime") == true && level >= LogLevel.Error)
+                // Suppress all Fatal/Critical logs (shutdown errors)
+                if (level >= LogLevel.Critical)
                     return false;
+                // Allow other logs through
                 return true;
             });
         });
@@ -54,18 +55,8 @@ public class UmbracoCloudLiveWebApplicationFactory : WebApplicationFactory<Progr
                 ["ConnectionStrings:umbracoDbDSN"] = $"Data Source={_dbPath}",
                 ["ConnectionStrings:umbracoDbDSN_ProviderName"] = "Microsoft.Data.Sqlite",
                 
-                // Enable unattended install
-                ["Umbraco:CMS:Unattended:InstallUnattended"] = "true",
-                ["Umbraco:CMS:Unattended:UpgradeUnattended"] = "true",
-                ["Umbraco:CMS:Unattended:UnattendedUserName"] = "test",
-                ["Umbraco:CMS:Unattended:UnattendedUserEmail"] = "test@test.com",
-                ["Umbraco:CMS:Unattended:UnattendedUserPassword"] = "Test1234567!",
-                
-                ["Umbraco:CMS:Global:InstallMissingDatabase"] = "true",
-                ["Umbraco:CMS:Global:Id"] = Guid.NewGuid().ToString(),
+                // Speed up startup
                 ["Umbraco:CMS:Content:Notifications:MaxProcessingDelayMilliseconds"] = "0",
-                
-                // No sites configured - should use Cloud Live default (allow all)
             };
 
             config.AddInMemoryCollection(testConfig!);

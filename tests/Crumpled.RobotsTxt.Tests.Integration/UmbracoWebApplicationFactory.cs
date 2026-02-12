@@ -31,12 +31,13 @@ public class UmbracoWebApplicationFactory : WebApplicationFactory<Program>
         // Suppress noisy shutdown errors in tests
         builder.ConfigureLogging(logging =>
         {
-            logging.AddFilter("Microsoft.Extensions.Hosting", LogLevel.None);
+            logging.SetMinimumLevel(LogLevel.None);
             logging.AddFilter((category, level) => 
             {
-                // Suppress shutdown-related errors
-                if (category?.Contains("ApplicationLifetime") == true && level >= LogLevel.Error)
+                // Suppress all Fatal/Critical logs (shutdown errors)
+                if (level >= LogLevel.Critical)
                     return false;
+                // Allow other logs through
                 return true;
             });
         });
@@ -49,36 +50,8 @@ public class UmbracoWebApplicationFactory : WebApplicationFactory<Program>
                 ["ConnectionStrings:umbracoDbDSN"] = $"Data Source={_dbPath}",
                 ["ConnectionStrings:umbracoDbDSN_ProviderName"] = "Microsoft.Data.Sqlite",
                 
-                // Enable unattended install
-                ["Umbraco:CMS:Unattended:InstallUnattended"] = "true",
-                ["Umbraco:CMS:Unattended:UpgradeUnattended"] = "true",
-                ["Umbraco:CMS:Unattended:UnattendedUserName"] = "test",
-                ["Umbraco:CMS:Unattended:UnattendedUserEmail"] = "test@test.com",
-                ["Umbraco:CMS:Unattended:UnattendedUserPassword"] = "Test1234567!",
-                
-                // Use file database
-                ["Umbraco:CMS:Global:InstallMissingDatabase"] = "true",
-                
-                // Disable analytics
-                ["Umbraco:CMS:Global:Id"] = Guid.NewGuid().ToString(),
-                
                 // Speed up startup
                 ["Umbraco:CMS:Content:Notifications:MaxProcessingDelayMilliseconds"] = "0",
-                
-                // Robots.txt test configuration - multi-site setup
-                // Site configurations
-                ["Crumpled:RobotsTxt:Sites:Development:HostNames"] = "localhost:44389",
-                ["Crumpled:RobotsTxt:Sites:Development:SiteMapDomain"] = "localhost:44389",
-                ["Crumpled:RobotsTxt:Sites:Development:RuleSet"] = "DevelopmentRules",
-                
-                ["Crumpled:RobotsTxt:Sites:Production:HostNames"] = "localhost:44390", 
-                ["Crumpled:RobotsTxt:Sites:Production:SiteMapDomain"] = "localhost:44390",
-                ["Crumpled:RobotsTxt:Sites:Production:RuleSet"] = "ProductionRules",
-                
-                // Define rulesets
-                ["Crumpled:RobotsTxt:RuleSets:DevelopmentRules:Disallow:*:0"] = "/",
-                
-                ["Crumpled:RobotsTxt:RuleSets:ProductionRules:Allow:*:0"] = "/",
             };
 
             config.AddInMemoryCollection(testConfig!);
