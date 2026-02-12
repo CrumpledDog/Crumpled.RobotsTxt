@@ -4,6 +4,8 @@ A flexible, configuration-driven robots.txt solution for **Umbraco v13, v14, v15
 
 <img src="crumpled-robots-txt.svg" width="150" />
 
+[![Build Status](https://github.com/CrumpledDog/Crumpled.RobotsTxt/actions/workflows/ci.yml/badge.svg?branch=develop/v3)](https://github.com/CrumpledDog/Crumpled.RobotsTxt/actions/workflows/ci.yml) [![NuGet](https://img.shields.io/nuget/v/Crumpled.RobotsTxt.svg)](https://www.nuget.org/packages/Crumpled.RobotsTxt/) [![NuGet Downloads](https://img.shields.io/nuget/dt/Crumpled.RobotsTxt.svg)](https://www.nuget.org/packages/Crumpled.RobotsTxt/)
+
 ## Repository Structure
 
 This repository contains:
