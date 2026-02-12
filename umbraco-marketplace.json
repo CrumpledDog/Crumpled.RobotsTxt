@@ -17,5 +17,6 @@
   "IssueTrackerUrl": "https://github.com/CrumpledDog/Crumpled.RobotsTxt/issues",
   "LicenseTypes": [ "Free" ],
   "PackageType": "Package",
-  "Tags": [ "Robots.txt", "Robots", "Umbraco Cloud" ]
+  "Tags": [ "Robots.txt", "Robots", "Umbraco Cloud" ],
+  "VersionDependencyMode": "SemVer"
 }
