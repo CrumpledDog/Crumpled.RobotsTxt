@@ -1,6 +1,6 @@
 # Crumpled.RobotsTxt
 
-A flexible, configuration-driven robots.txt solution for Umbraco that protects your non-production environments from search engine indexing by default, while giving you granular control over crawling rules across multiple sites and environments.
+A flexible, configuration-driven robots.txt solution for **Umbraco v13, v14, v15, v16 & v17** that protects your non-production environments from search engine indexing by default, while giving you granular control over crawling rules across multiple sites and environments.
 
 ## Key Features
 
