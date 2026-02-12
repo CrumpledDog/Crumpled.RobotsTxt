@@ -147,6 +147,29 @@ jobs:
     - name: Build slnx
       run: dotnet build ${{ github.workspace }}/*.slnx -c Release
 
+    - name: Run Integration Tests
+      run: |
+        dotnet test tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj --configuration Release --framework net8.0 --logger "trx;LogFileName=test-results-net8.0.trx" --logger "console;verbosity=normal"
+        dotnet test tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj --configuration Release --framework net10.0 --logger "trx;LogFileName=test-results-net10.0.trx" --logger "console;verbosity=normal"
+
+    - name: Publish Test Results (Umbraco v13)
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Integration Test Results (Umbraco v13)
+        path: '**/test-results-net8.0.trx'
+        reporter: dotnet-trx
+        fail-on-error: true
+
+    - name: Publish Test Results (Umbraco v17)
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Integration Test Results (Umbraco v17)
+        path: '**/test-results-net10.0.trx'
+        reporter: dotnet-trx
+        fail-on-error: true
+
     - name: Pack NuGet Package
       working-directory: ${{ env.PATH_TO_EXTENSION }}
       run: dotnet pack --configuration Release /p:PackageVersion=${{ needs.setup.outputs.semver }}

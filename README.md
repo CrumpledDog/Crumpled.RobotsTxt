@@ -12,7 +12,7 @@ This repository contains:
 
 - **[Crumpled.RobotsTxt](src/Crumpled.RobotsTxt/)** - Main Umbraco package for managing robots.txt configuration ([README](src/Crumpled.RobotsTxt/README.md))
 - **[Crumpled.RobotsTxt.Core](src/Crumpled.RobotsTxt.Core/)** - Internal ASP.NET Core robots.txt middleware implementation
-- **[Crumpled.RobotsTxt.TestSite](src/Crumpled.RobotsTxt.TestSite/)** - Test Umbraco site for development (Umbraco v14+)
+- **[Crumpled.RobotsTxt.TestSite](src/Crumpled.RobotsTxt.TestSite/)** - Test Umbraco site for development (Umbraco v17.*)
 - **[Crumpled.RobotsTxt.TestSite13](src/Crumpled.RobotsTxt.TestSite13/)** - Test Umbraco site for v13 compatibility
 
 ## Installation
