@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Crumpled.RobotsTxt.Tests.Integration;
 
@@ -27,6 +28,19 @@ public class UmbracoWebApplicationFactory : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // Suppress noisy shutdown errors in tests
+        builder.ConfigureLogging(logging =>
+        {
+            logging.AddFilter("Microsoft.Extensions.Hosting", LogLevel.None);
+            logging.AddFilter((category, level) => 
+            {
+                // Suppress shutdown-related errors
+                if (category?.Contains("ApplicationLifetime") == true && level >= LogLevel.Error)
+                    return false;
+                return true;
+            });
+        });
+        
         builder.ConfigureAppConfiguration((context, config) =>
         {
             // Use file-based SQLite database for testing (in-memory doesn't work with Umbraco's connection pooling)
