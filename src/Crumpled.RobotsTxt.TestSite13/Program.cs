@@ -28,3 +28,6 @@ app.UseUmbraco()
 	});
 
 await app.RunAsync();
+
+// Expose Program class for WebApplicationFactory integration tests
+public partial class Program { }

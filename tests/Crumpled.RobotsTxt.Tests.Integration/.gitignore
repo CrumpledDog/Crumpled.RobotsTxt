@@ -475,8 +475,9 @@ umbraco-package-schema.json
 /umbraco/Data/*.sqlite.db-shm
 /umbraco/Data/*.sqlite.db-wal
 
-# Allow seed database for fast test startup
-!Umbraco.seed.sqlite.db
+# Allow seed databases for fast test startup
+!Umbraco.seed.v13.sqlite.db
+!Umbraco.seed.v17.sqlite.db
 
 # Log files
 /umbraco/Logs/
