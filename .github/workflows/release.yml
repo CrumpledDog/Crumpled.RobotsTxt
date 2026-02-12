@@ -162,7 +162,6 @@ jobs:
       if: ${{ needs.setup.outputs.new_release_published == 'true' && github.event.inputs.publish_to_nuget == 'true' && startsWith(github.ref, 'refs/heads/release/') && !contains(needs.setup.outputs.semver, '-') }}
       run: |
         dotnet nuget push "${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
-        dotnet nuget push "${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.snupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
     
     - name: Merge release branch to develop
       if: ${{ needs.setup.outputs.new_release_published == 'true' && startsWith(github.ref, 'refs/heads/release/') }}

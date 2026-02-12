@@ -2,8 +2,6 @@
 
 A flexible, configuration-driven robots.txt solution for Umbraco that protects your non-production environments from search engine indexing by default, while giving you granular control over crawling rules across multiple sites and environments.
 
-<img src="https://raw.githubusercontent.com/CrumpledDog/Crumpled.RobotsTxt/refs/heads/develop/v1/crumpled-robots-txt.svg" width="150" />
-
 ## Key Features
 
 - **🛡️ Safe by Default** - Blocks all bots by default to prevent accidental indexing of development, staging, or preview environments
