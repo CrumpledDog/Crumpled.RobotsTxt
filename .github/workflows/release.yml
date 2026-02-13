@@ -84,6 +84,9 @@ jobs:
         jq '.version = "${{ needs.setup.outputs.semver }}"' ${{ env.PATH_TO_EXTENSION }}/wwwroot/umbraco-package.json > temp.json && mv temp.json ${{ env.PATH_TO_EXTENSION }}/wwwroot/umbraco-package.json
         echo "Updated version in ${{ env.PATH_TO_EXTENSION }}/wwwroot/umbraco-package.json to ${{ needs.setup.outputs.semver }}"
 
+        jq '.version = "${{ needs.setup.outputs.semver }}"' ${{ env.PATH_TO_EXTENSION }}/wwwroot/package.manifest > temp.json && mv temp.json ${{ env.PATH_TO_EXTENSION }}/wwwroot/package.manifest
+        echo "Updated version in ${{ env.PATH_TO_EXTENSION }}/wwwroot/package.manifest to ${{ needs.setup.outputs.semver }}"
+
         # Convert semantic version to numeric file version (e.g., 2.0.0-alpha.1 -> 2.0.0.1)
         SEMVER="${{ needs.setup.outputs.semver }}"
         if [[ $SEMVER == *"-"* ]]; then
