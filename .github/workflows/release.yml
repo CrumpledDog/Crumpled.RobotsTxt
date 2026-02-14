@@ -79,63 +79,7 @@ jobs:
           nuget-cache-${{ runner.os }}-nuget-
 
     - name: Update Version Files
-      run: |
-
-        jq '.version = "${{ needs.setup.outputs.semver }}"' ${{ env.PATH_TO_EXTENSION }}/wwwroot/umbraco-package.json > temp.json && mv temp.json ${{ env.PATH_TO_EXTENSION }}/wwwroot/umbraco-package.json
-        echo "Updated version in ${{ env.PATH_TO_EXTENSION }}/wwwroot/umbraco-package.json to ${{ needs.setup.outputs.semver }}"
-
-        jq '.version = "${{ needs.setup.outputs.semver }}"' ${{ env.PATH_TO_EXTENSION }}/wwwroot/package.manifest > temp.json && mv temp.json ${{ env.PATH_TO_EXTENSION }}/wwwroot/package.manifest
-        echo "Updated version in ${{ env.PATH_TO_EXTENSION }}/wwwroot/package.manifest to ${{ needs.setup.outputs.semver }}"
-
-        # Convert semantic version to numeric file version (e.g., 2.0.0-alpha.1 -> 2.0.0.1)
-        SEMVER="${{ needs.setup.outputs.semver }}"
-        if [[ $SEMVER == *"-"* ]]; then
-          BASE_VERSION=$(echo $SEMVER | cut -d'-' -f1)
-          PRERELEASE=$(echo $SEMVER | cut -d'-' -f2)
-          # Extract number from prerelease (e.g., alpha.1 -> 1, beta.2 -> 2)
-          PRERELEASE_NUM=$(echo $PRERELEASE | grep -o '[0-9]\+$' || echo "0")
-          FILE_VERSION="${BASE_VERSION}.${PRERELEASE_NUM}"
-        else
-          FILE_VERSION="${SEMVER}.0"
-        fi
-        
-        # Update both main and core project files
-        update_file_version() {
-          local CSPROJ_PATH=$1
-          local FILE_VERSION=$2
-          local INFORMATIONAL_VERSION=$3
-          
-          if [ ! -f "$CSPROJ_PATH" ]; then
-            echo "Warning: $CSPROJ_PATH not found"
-            return
-          fi
-          
-          # Check if FileVersion element exists
-          if grep -q "<FileVersion>" "$CSPROJ_PATH"; then
-            # Update existing FileVersion
-            sed -i "s|<FileVersion>.*</FileVersion>|<FileVersion>$FILE_VERSION</FileVersion>|" "$CSPROJ_PATH"
-            echo "Updated FileVersion in $CSPROJ_PATH to $FILE_VERSION"
-          else
-            # Add FileVersion to the first PropertyGroup
-            sed -i "0,/<PropertyGroup>/s|<PropertyGroup>|<PropertyGroup>\n\t\t<FileVersion>$FILE_VERSION</FileVersion>|" "$CSPROJ_PATH"
-            echo "Added FileVersion to $CSPROJ_PATH with value $FILE_VERSION"
-          fi
-          
-          # Check if InformationalVersion element exists
-          if grep -q "<InformationalVersion>" "$CSPROJ_PATH"; then
-            # Update existing InformationalVersion
-            sed -i "s|<InformationalVersion>.*</InformationalVersion>|<InformationalVersion>$INFORMATIONAL_VERSION</InformationalVersion>|" "$CSPROJ_PATH"
-            echo "Updated InformationalVersion in $CSPROJ_PATH to $INFORMATIONAL_VERSION"
-          else
-            # Add InformationalVersion to the first PropertyGroup
-            sed -i "0,/<PropertyGroup>/s|<PropertyGroup>|<PropertyGroup>\n\t\t<InformationalVersion>$INFORMATIONAL_VERSION</InformationalVersion>|" "$CSPROJ_PATH"
-            echo "Added InformationalVersion to $CSPROJ_PATH with value $INFORMATIONAL_VERSION"
-          fi
-        }
-        
-        # Update both project files
-        update_file_version "src/Crumpled.RobotsTxt/Crumpled.RobotsTxt.csproj" "$FILE_VERSION" "$SEMVER"
-        update_file_version "src/Crumpled.RobotsTxt.Core/Crumpled.RobotsTxt.Core.csproj" "$FILE_VERSION" "$SEMVER"
+      run: .github/scripts/update-version-files.sh "${{ needs.setup.outputs.semver }}" "${{ env.PATH_TO_EXTENSION }}"
 
     - name: Build slnx
       run: dotnet build ${{ github.workspace }}/*.slnx -c Release
@@ -167,6 +111,12 @@ jobs:
       working-directory: ${{ env.PATH_TO_EXTENSION }}
       run: dotnet pack --configuration Release /p:PackageVersion=${{ needs.setup.outputs.semver }}
     
+    - name: Create GitHub Release
+      if: ${{ needs.setup.outputs.new_release_published == 'true' }}
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: .github/scripts/create-release-notes.sh "${{ needs.setup.outputs.semver }}" "Crumpled.RobotsTxt" "https://nuget.pkg.github.com/CrumpledDog/index.json"
+    
     - name: Login
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
       run: dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/CrumpledDog/index.json"
@@ -186,23 +136,4 @@ jobs:
     
     - name: Merge release branch to develop
       if: ${{ needs.setup.outputs.new_release_published == 'true' && startsWith(github.ref, 'refs/heads/release/') }}
-      run: |
-        # Extract version from release branch (e.g., release/v1 -> v1)
-        VERSION_SUFFIX=$(echo ${GITHUB_REF#refs/heads/release/})
-        DEVELOP_BRANCH="develop/$VERSION_SUFFIX"
-        
-        # Configure git
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        
-        # Fetch the develop branch
-        git fetch origin $DEVELOP_BRANCH
-        
-        # Checkout develop branch
-        git checkout $DEVELOP_BRANCH
-        
-        # Merge release branch into develop
-        git merge --no-ff origin/${GITHUB_REF#refs/heads/} -m "chore: merge ${GITHUB_REF#refs/heads/} into $DEVELOP_BRANCH after release ${{ needs.setup.outputs.semver }}"
-        
-        # Push changes
-        git push origin $DEVELOP_BRANCH
+      run: .github/scripts/merge-to-develop.sh "${{ needs.setup.outputs.semver }}"
