@@ -9,4 +9,5 @@
   <Project Path="src/Crumpled.RobotsTxt.TestSite/Crumpled.RobotsTxt.TestSite.csproj" />
   <Project Path="src/Crumpled.RobotsTxt.TestSite13/Crumpled.RobotsTxt.TestSite13.csproj" />
   <Project Path="src/Crumpled.RobotsTxt/Crumpled.RobotsTxt.csproj" />
+  <Project Path="tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj" />
 </Solution>
