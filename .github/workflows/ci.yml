@@ -93,7 +93,7 @@ jobs:
       run: .github/scripts/update-version-files.sh "${{ needs.setup.outputs.semver }}" "${{ env.PATH_TO_EXTENSION }}"
 
     - name: Build slnx
-      run: dotnet build ${{ github.workspace }}/*.slnx -c Release
+      run: dotnet build ${{ github.workspace }}/*.slnx -c Release /maxcpucount:1
 
     - name: Run Integration Tests
       run: |
