@@ -126,5 +126,8 @@ jobs:
       working-directory: ${{ env.PATH_TO_EXTENSION }}
       run: dotnet pack --configuration Release /p:PackageVersion=${{ needs.setup.outputs.semver }}
     
+    - name: Install Package Validation Tool
+      run: dotnet tool install -g dotnet-validate --prerelease
+    
     - name: Validate NuGet Package
-      run: dotnet package validate ${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.nupkg
+      run: dotnet validate package local ${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.nupkg
