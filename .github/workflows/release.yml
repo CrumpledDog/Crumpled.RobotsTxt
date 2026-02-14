@@ -109,7 +109,7 @@ jobs:
 
     - name: Pack NuGet Package
       working-directory: ${{ env.PATH_TO_EXTENSION }}
-      run: dotnet pack --configuration Release --no-build /p:PackageVersion=${{ needs.setup.outputs.semver }}
+      run: dotnet pack --configuration Release /p:PackageVersion=${{ needs.setup.outputs.semver }}
     
     - name: Create GitHub Release
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
