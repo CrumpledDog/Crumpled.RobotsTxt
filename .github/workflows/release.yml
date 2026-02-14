@@ -1,5 +1,9 @@
 name: Build and Package
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   PATH_TO_EXTENSION: "src/Crumpled.RobotsTxt"
   DOTNET_VERSION: '10'
@@ -111,13 +115,17 @@ jobs:
       working-directory: ${{ env.PATH_TO_EXTENSION }}
       run: dotnet pack --configuration Release /p:PackageVersion=${{ needs.setup.outputs.semver }}
     
+    - name: Validate NuGet Package
+      if: ${{ needs.setup.outputs.new_release_published == 'true' }}
+      run: dotnet package validate ${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.nupkg
+    
     - name: Create GitHub Release
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: .github/scripts/create-release-notes.sh "${{ needs.setup.outputs.semver }}" "Crumpled.RobotsTxt" "https://nuget.pkg.github.com/CrumpledDog/index.json"
     
-    - name: Login
+    - name: Add GitHub Packages Source
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
       run: dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/CrumpledDog/index.json"
 

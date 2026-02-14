@@ -1,5 +1,9 @@
 name: Verify Build
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   PATH_TO_EXTENSION: "src/Crumpled.RobotsTxt"
   DOTNET_VERSION: '10'
@@ -121,3 +125,6 @@ jobs:
     - name: Pack NuGet Package
       working-directory: ${{ env.PATH_TO_EXTENSION }}
       run: dotnet pack --configuration Release /p:PackageVersion=${{ needs.setup.outputs.semver }}
+    
+    - name: Validate NuGet Package
+      run: dotnet package validate ${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.nupkg
