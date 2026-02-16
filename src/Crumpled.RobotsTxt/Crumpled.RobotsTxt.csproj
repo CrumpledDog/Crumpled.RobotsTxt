@@ -31,6 +31,7 @@
 		<Authors>Crumpled Dog and Umbraco Community</Authors>
 		<RepositoryUrl>https://github.com/CrumpledDog/Crumpled.RobotsTxt</RepositoryUrl>
 		<PackageProjectUrl>https://github.com/CrumpledDog/Crumpled.RobotsTxt</PackageProjectUrl>
+		<InformationalVersion>$(PackageVersion)</InformationalVersion>
 	</PropertyGroup>
 
 	<ItemGroup>

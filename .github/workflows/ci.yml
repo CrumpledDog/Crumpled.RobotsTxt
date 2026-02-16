@@ -94,6 +94,7 @@ jobs:
           nuget-cache-${{ runner.os }}-nuget-
 
     - name: Update Version Files
+      id: update-version
       run: .github/scripts/update-version-files.sh "${{ needs.setup.outputs.semver }}" "${{ env.PATH_TO_EXTENSION }}"
 
     - name: Build slnx
@@ -124,7 +125,7 @@ jobs:
 
     - name: Pack NuGet Package
       working-directory: ${{ env.PATH_TO_EXTENSION }}
-      run: dotnet pack --configuration Release /p:PackageVersion=${{ needs.setup.outputs.semver }}
+      run: dotnet pack --configuration Release /p:PackageVersion=${{ needs.setup.outputs.semver }} /p:FileVersion=${{ steps.update-version.outputs.file_version }}
     
     - name: Install Package Validation Tool
       run: dotnet tool install -g dotnet-validate --prerelease
