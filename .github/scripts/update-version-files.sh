@@ -2,10 +2,10 @@
 set -e
 
 # Update Version Files Script
-# Updates version numbers in package.json, package.manifest, and .csproj files
+# Updates version numbers in umbraco-package.json, package.manifest, and related files
 #
 # Usage: ./update-version-files.sh <semver> <path_to_extension>
-# Example: ./update-version-files.sh "2.0.0-alpha.1" "src/Crumpled.RobotsTxt"
+# Example: ./update-version-files.sh "1.0.0-alpha.1" "src/Extension"
 
 SEMVER="$1"
 PATH_TO_EXTENSION="$2"
@@ -18,15 +18,19 @@ fi
 
 echo "Updating version to $SEMVER in $PATH_TO_EXTENSION"
 
-# Update umbraco-package.json
-jq '.version = "'"$SEMVER"'"' "$PATH_TO_EXTENSION/wwwroot/umbraco-package.json" > temp.json && mv temp.json "$PATH_TO_EXTENSION/wwwroot/umbraco-package.json"
-echo "Updated version in $PATH_TO_EXTENSION/wwwroot/umbraco-package.json to $SEMVER"
+# Update umbraco-package.json if it exists
+if [ -f "$PATH_TO_EXTENSION/wwwroot/umbraco-package.json" ]; then
+  jq '.version = "'"$SEMVER"'"' "$PATH_TO_EXTENSION/wwwroot/umbraco-package.json" > temp.json && mv temp.json "$PATH_TO_EXTENSION/wwwroot/umbraco-package.json"
+  echo "Updated version in $PATH_TO_EXTENSION/wwwroot/umbraco-package.json to $SEMVER"
+fi
 
-# Update package.manifest
-jq '.version = "'"$SEMVER"'"' "$PATH_TO_EXTENSION/wwwroot/package.manifest" > temp.json && mv temp.json "$PATH_TO_EXTENSION/wwwroot/package.manifest"
-echo "Updated version in $PATH_TO_EXTENSION/wwwroot/package.manifest to $SEMVER"
+# Update package.manifest if it exists
+if [ -f "$PATH_TO_EXTENSION/wwwroot/package.manifest" ]; then
+  jq '.version = "'"$SEMVER"'"' "$PATH_TO_EXTENSION/wwwroot/package.manifest" > temp.json && mv temp.json "$PATH_TO_EXTENSION/wwwroot/package.manifest"
+  echo "Updated version in $PATH_TO_EXTENSION/wwwroot/package.manifest to $SEMVER"
+fi
 
-# Convert semantic version to numeric file version (e.g., 2.0.0-alpha.1 -> 2.0.0.1)
+# Convert semantic version to numeric file version (e.g., 1.0.0-alpha.1 -> 1.0.0.1)
 if [[ $SEMVER == *"-"* ]]; then
   BASE_VERSION=$(echo "$SEMVER" | cut -d'-' -f1)
   PRERELEASE=$(echo "$SEMVER" | cut -d'-' -f2)
