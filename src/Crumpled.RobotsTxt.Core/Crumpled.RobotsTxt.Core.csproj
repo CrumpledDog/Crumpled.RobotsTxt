@@ -3,6 +3,7 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<InformationalVersion>$(PackageVersion)</InformationalVersion>
 		<!-- Generate debug symbols -->
 		<DebugType>portable</DebugType>
 		<!-- Enable deterministic builds in CI -->
