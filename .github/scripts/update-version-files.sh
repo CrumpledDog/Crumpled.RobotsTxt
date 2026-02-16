@@ -34,45 +34,25 @@ if [[ $SEMVER == *"-"* ]]; then
   PRERELEASE_NUM=$(echo "$PRERELEASE" | grep -o '[0-9]\+$' || echo "0")
   FILE_VERSION="${BASE_VERSION}.${PRERELEASE_NUM}"
 else
-  FILE_VERSION="${SEMVER}.0"
+  # Stable release: Find highest pre-release number for this version and add 1
+  BASE_VERSION="$SEMVER"
+  # Get all tags matching this version with pre-release suffix
+  MAX_PRERELEASE=$(git tag -l "v${BASE_VERSION}-*" | grep -o '[0-9]\+$' | sort -n | tail -1)
+  if [ -z "$MAX_PRERELEASE" ]; then
+    # No pre-releases found, use 1
+    FILE_VERSION="${BASE_VERSION}.1"
+  else
+    # Use max pre-release number + 1
+    NEXT_NUM=$((MAX_PRERELEASE + 1))
+    FILE_VERSION="${BASE_VERSION}.${NEXT_NUM}"
+  fi
 fi
 
-# Function to update file version in .csproj files
-update_file_version() {
-  local CSPROJ_PATH=$1
-  local FILE_VERSION=$2
-  local INFORMATIONAL_VERSION=$3
-  
-  if [ ! -f "$CSPROJ_PATH" ]; then
-    echo "Warning: $CSPROJ_PATH not found"
-    return
-  fi
-  
-  # Check if FileVersion element exists
-  if grep -q "<FileVersion>" "$CSPROJ_PATH"; then
-    # Update existing FileVersion
-    sed -i "s|<FileVersion>.*</FileVersion>|<FileVersion>$FILE_VERSION</FileVersion>|" "$CSPROJ_PATH"
-    echo "Updated FileVersion in $CSPROJ_PATH to $FILE_VERSION"
-  else
-    # Add FileVersion to the first PropertyGroup
-    sed -i "0,/<PropertyGroup>/s|<PropertyGroup>|<PropertyGroup>\n\t\t<FileVersion>$FILE_VERSION</FileVersion>|" "$CSPROJ_PATH"
-    echo "Added FileVersion to $CSPROJ_PATH with value $FILE_VERSION"
-  fi
-  
-  # Check if InformationalVersion element exists
-  if grep -q "<InformationalVersion>" "$CSPROJ_PATH"; then
-    # Update existing InformationalVersion
-    sed -i "s|<InformationalVersion>.*</InformationalVersion>|<InformationalVersion>$INFORMATIONAL_VERSION</InformationalVersion>|" "$CSPROJ_PATH"
-    echo "Updated InformationalVersion in $CSPROJ_PATH to $INFORMATIONAL_VERSION"
-  else
-    # Add InformationalVersion to the first PropertyGroup
-    sed -i "0,/<PropertyGroup>/s|<PropertyGroup>|<PropertyGroup>\n\t\t<InformationalVersion>$INFORMATIONAL_VERSION</InformationalVersion>|" "$CSPROJ_PATH"
-    echo "Added InformationalVersion to $CSPROJ_PATH with value $INFORMATIONAL_VERSION"
-  fi
-}
-
-# Update both project files
-update_file_version "src/Crumpled.RobotsTxt/Crumpled.RobotsTxt.csproj" "$FILE_VERSION" "$SEMVER"
-update_file_version "src/Crumpled.RobotsTxt.Core/Crumpled.RobotsTxt.Core.csproj" "$FILE_VERSION" "$SEMVER"
-
 echo "Version update completed successfully"
+echo "SEMVER=$SEMVER"
+echo "FILE_VERSION=$FILE_VERSION"
+
+# Output for GitHub Actions
+if [ -n "$GITHUB_OUTPUT" ]; then
+  echo "file_version=$FILE_VERSION" >> "$GITHUB_OUTPUT"
+fi
