@@ -13,6 +13,9 @@
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<!-- Enable deterministic builds in CI -->
 		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+		<!-- SourceLink configuration -->
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -35,6 +38,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
 		<PackageReference Include="Umbraco.Cms.Web.Website" Version="13.0.0" />
 	</ItemGroup>
 
