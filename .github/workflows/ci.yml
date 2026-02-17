@@ -95,7 +95,10 @@ jobs:
 
     - name: Update Version Files
       id: update-version
-      run: .github/scripts/update-version-files.sh "${{ needs.setup.outputs.semver }}" "${{ env.PATH_TO_EXTENSION }}"
+      uses: CrumpledDog/Crumpled.Umbraco.Package.Actions/update-version-files@main
+      with:
+        semver: ${{ needs.setup.outputs.semver }}
+        path-to-extension: ${{ env.PATH_TO_EXTENSION }}
 
     - name: Build slnx
       run: dotnet build ${{ github.workspace }}/*.slnx -c Release /maxcpucount:1
