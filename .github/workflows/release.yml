@@ -48,6 +48,14 @@ jobs:
             @semantic-release/github
             conventional-changelog-conventionalcommits
 
+      - name: Check Release
+        run: |
+          if [ -z "${{ steps.semantic.outputs.new_release_version }}" ]; then
+            echo "::error::No release version generated. Ensure there are conventional commits since the last release."
+            exit 1
+          fi
+          echo "Release version: ${{ steps.semantic.outputs.new_release_version }}"
+
       - name: Echo the version
         run: |
           echo "New release version: '${{ steps.semantic.outputs.new_release_version }}'"

@@ -18,13 +18,25 @@ fi
 
 echo "Updating version to $SEMVER in $PATH_TO_EXTENSION"
 
-# Update umbraco-package.json if it exists
-if [ -f "$PATH_TO_EXTENSION/wwwroot/umbraco-package.json" ]; then
+# Update Client/public/umbraco-package.json if it exists
+if [ -f "$PATH_TO_EXTENSION/Client/public/umbraco-package.json" ]; then
+  jq '.version = "'"$SEMVER"'"' "$PATH_TO_EXTENSION/Client/public/umbraco-package.json" > temp.json && mv temp.json "$PATH_TO_EXTENSION/Client/public/umbraco-package.json"
+  echo "Updated version in $PATH_TO_EXTENSION/Client/public/umbraco-package.json to $SEMVER"
+fi
+
+# Update Client/package.json if it exists
+if [ -f "$PATH_TO_EXTENSION/Client/package.json" ]; then
+  jq '.version = "'"$SEMVER"'"' "$PATH_TO_EXTENSION/Client/package.json" > temp2.json && mv temp2.json "$PATH_TO_EXTENSION/Client/package.json"
+  echo "Updated version in $PATH_TO_EXTENSION/Client/package.json to $SEMVER"
+fi
+
+# Update umbraco-package.json if it exists (but not if Client version exists)
+if [ -f "$PATH_TO_EXTENSION/wwwroot/umbraco-package.json" ] && [ ! -f "$PATH_TO_EXTENSION/Client/public/umbraco-package.json" ]; then
   jq '.version = "'"$SEMVER"'"' "$PATH_TO_EXTENSION/wwwroot/umbraco-package.json" > temp.json && mv temp.json "$PATH_TO_EXTENSION/wwwroot/umbraco-package.json"
   echo "Updated version in $PATH_TO_EXTENSION/wwwroot/umbraco-package.json to $SEMVER"
 fi
 
-# Update package.manifest if it exists
+# Update package.manifest if it exists (Umbraco v13)
 if [ -f "$PATH_TO_EXTENSION/wwwroot/package.manifest" ]; then
   jq '.version = "'"$SEMVER"'"' "$PATH_TO_EXTENSION/wwwroot/package.manifest" > temp.json && mv temp.json "$PATH_TO_EXTENSION/wwwroot/package.manifest"
   echo "Updated version in $PATH_TO_EXTENSION/wwwroot/package.manifest to $SEMVER"
