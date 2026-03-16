@@ -23,7 +23,8 @@ internal class DynamicRobotsTxtProvider(
         var robotsTxtContent = BuildRobotsTxtContent(options, httpContext);
         var contentBytes = Encoding.UTF8.GetBytes(robotsTxtContent).AsMemory();
 
-        var result = new RobotsTxtResult(contentBytes, maxAge: 3600); // 1 hour cache
+        var maxAge = (int)options.MaxAge.TotalSeconds;
+        var result = new RobotsTxtResult(contentBytes, maxAge: maxAge);
         return Task.FromResult(result);
     }
 

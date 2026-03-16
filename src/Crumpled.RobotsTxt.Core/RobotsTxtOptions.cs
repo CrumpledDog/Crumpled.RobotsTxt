@@ -178,14 +178,14 @@ public class ContentSignalSettings
 
         if (signals.Count > 0)
         {
-            builder.Append("Content-Signal: ");
+            builder.Append("Content-Signal:");
 
             if (!string.IsNullOrWhiteSpace(Path))
             {
-                builder.Append(Path).Append(' ');
+                builder.Append($" path=\"{Path}\"");
             }
 
-            builder.AppendLine(string.Join(", ", signals));
+            builder.Append(' ').AppendLine(string.Join(", ", signals));
         }
     }
 }
