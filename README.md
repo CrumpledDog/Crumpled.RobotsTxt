@@ -83,3 +83,101 @@ Run the Umbraco v13 test site:
 ```bash
 dotnet run --project src/Crumpled.RobotsTxt.TestSite13
 ```
+
+### Testing Semantic Release
+
+To test semantic-release configuration locally without actually publishing:
+
+```bash
+# First-time setup - install dependencies
+npm install
+
+# Test what version would be released
+npx semantic-release --dry-run --no-ci
+```
+
+This will:
+- Analyze commits since the last release
+- Determine the next version number based on commit messages
+- Show what would be released without actually creating tags or publishing
+
+**Note:** Requires conventional commit format (`feat:`, `fix:`, etc.) for version determination.
+
+## Branching & Release Strategy
+
+This project uses [semantic-release](https://semantic-release.gitbook.io/) for automated versioning and publishing based on conventional commits.
+
+### Branch Structure
+
+| Branch Pattern | Prerelease Tag | Version Example | Purpose |
+|---------------|----------------|-----------------|---------|
+| `release/v3` | None | `3.1.0` | Stable production releases |
+| `develop/v3` | `alpha` | `3.1.0-alpha.1` | Integration branch for next release |
+| `feature/v3/**` | `feature.alpha` | `3.1.0-feature.alpha.1` | New features in development |
+| `hotfix/v3/**` | `hotfix.alpha` | `3.1.0-hotfix.alpha.1` | Bug fixes for next release |
+
+### Commit Convention
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) format for all commits:
+
+```
+<type>: <description>
+
+[optional body]
+
+[optional footer]
+```
+
+**Common types:**
+- `feat:` - New feature (triggers **minor** version bump)
+- `fix:` - Bug fix (triggers **patch** version bump)
+- `docs:` - Documentation only changes
+- `refactor:` - Code refactoring without behavior changes
+- `perf:` - Performance improvements
+- `test:` - Adding or updating tests
+- `ci:` - CI/CD pipeline changes
+- `chore:` - Maintenance tasks
+
+**Breaking changes:** Add `BREAKING CHANGE:` in the commit footer or `!` after type (triggers **major** version bump)
+
+**Examples:**
+```bash
+feat: implement Content Signals support
+fix: ensure Cloud Live environment allows all bots
+docs: update README with branching strategy
+feat!: change configuration schema (breaking change)
+```
+
+### Release Workflow
+
+1. **Feature Development**
+   - Branch from: `develop/v3`
+   - Create branch: `feature/v3/my-feature` 
+   - Make commits using conventional format
+   - Push to trigger CI - creates feature prerelease (e.g., `3.1.0-feature.alpha.1`)
+   - Merge back to: `develop/v3`
+
+2. **Hotfixes**
+   - Branch from: `release/v3`
+   - Create branch: `hotfix/v3/fix-description`
+   - Make commits using conventional format
+   - Push to trigger CI - creates hotfix prerelease (e.g., `3.1.0-hotfix.alpha.1`)
+   - Merge to: `release/v3` and `develop/v3`
+
+3. **Integration**
+   - Merge feature/hotfix branches into `develop/v3`
+   - Creates alpha prerelease (e.g., `3.1.0-alpha.1`)
+   - Use for testing integrated features
+
+4. **Stable Release**
+   - Merge `develop/v3` into `release/v3`
+   - Creates stable version (e.g., `3.1.0`)
+
+### CI/CD Pipeline
+
+All branches trigger the CI workflow which:
+1. Builds the solution
+2. Runs integration tests (net8.0 and net10.0)
+3. Determines version using semantic-release
+4. Packs NuGet package with calculated version
+5. Publishes to NuGet (on successful build)

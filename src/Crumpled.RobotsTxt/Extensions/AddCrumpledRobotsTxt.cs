@@ -5,74 +5,46 @@ using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Web.Common.ApplicationBuilder;
 
 using Crumpled.RobotsTxt.Core;
+using Crumpled.RobotsTxt.Providers;
 
-using static Crumpled.RobotsTxt.Core.RobotsTxtOptionsBuilder;
-
+#pragma warning disable IDE0130
 namespace Crumpled.RobotsTxt
+#pragma warning restore IDE0130
 {
-	public static partial class IUmbracoBuilderExtensions
-	{
-		public static IUmbracoBuilder AddCrumpledRobotsTxt(this IUmbracoBuilder builder)
-		{
-            var robotsTxtOptions = GetRobotsTxtOptions(builder.Config);
+    public static partial class UmbracoBuilderExtensions
+    {
+        public static IUmbracoBuilder AddCrumpledRobotsTxt(this IUmbracoBuilder builder)
+        {
+            // Register options with DI container for hot reload support
+            builder.Services.Configure<RobotsTxtOptions>(
+                builder.Config.GetSection("Crumpled").GetSection(RobotsTxtOptions.RobotsTxtSection));
 
-            // Check if there are any valid (non-null) sites configured
-            var validSites = robotsTxtOptions.Sites?.Where(x => x.Value != null).ToList();
-            
-            if (validSites != null && validSites.Any())
+            // Use PostConfigure to handle the custom parsing of Allow dictionaries
+            builder.Services.PostConfigure<RobotsTxtOptions>(options =>
             {
-                foreach (var site in validSites)
+                if (options.RuleSets != null)
                 {
-                    var ruleSet = robotsTxtOptions.RuleSets?.GetValueOrDefault(site.Value.RuleSet);
-                    var sitemapUrl = GetSitemapUrl(site.Value.SiteMapDomain);
-                    builder.Services.AddStaticRobotsTxt(robotBuilder => robotBuilder.BuildRulesFromConfig(ruleSet, sitemapUrl).ForHostnames(site.Value.HostNames.Split(',')));
-                }
+                    var configSection = builder.Config.GetSection("Crumpled")
+                        .GetSection(RobotsTxtOptions.RobotsTxtSection)
+                        .GetSection("RuleSets");
 
-                // Add catch-all fallback for unmatched domains
-                if (!string.IsNullOrEmpty(robotsTxtOptions.DefaultRuleset))
-                {
-                    var defaultRuleSet = robotsTxtOptions.RuleSets?.GetValueOrDefault(robotsTxtOptions.DefaultRuleset);
-                    builder.Services.AddStaticRobotsTxt(robotBuilder => 
-                        robotBuilder.BuildRulesFromConfig(defaultRuleSet, null));
-                }
-                else
-                {
-                    // Default to blocking all bots for safety
-                    builder.Services.AddStaticRobotsTxt(robotBuilder => 
-                        robotBuilder.AddSection(section => 
-                            section.AddUserAgent("*").Disallow("/")));
-                }
-            }
-            else
-            {
-                // Use DefaultRuleset if specified
-                if (!string.IsNullOrEmpty(robotsTxtOptions.DefaultRuleset))
-                {
-                    var defaultRuleSet = robotsTxtOptions.RuleSets?.GetValueOrDefault(robotsTxtOptions.DefaultRuleset);
-                    builder.Services.AddStaticRobotsTxt(robotBuilder => 
-                        robotBuilder.BuildRulesFromConfig(defaultRuleSet, null));
-                }
-                else
-                {
-                    // Check if running on Umbraco Cloud live environment
-                    var isUmbracoCloudLive = Environment.GetEnvironmentVariable("UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME")?.Equals("live", StringComparison.OrdinalIgnoreCase) ?? false;
-
-                    if (isUmbracoCloudLive)
+                    foreach (var ruleSetSection in configSection.GetChildren())
                     {
-                        // Default to allowing all bots on Umbraco Cloud live environment
-                        builder.Services.AddStaticRobotsTxt(robotBuilder => 
-                            robotBuilder.AddSection(section => 
-                                section.AddUserAgent("*").Allow("/")));
-                    }
-                    else
-                    {
-                        // Default to blocking all bots when no Sites are configured
-                        builder.Services.AddStaticRobotsTxt(robotBuilder => 
-                            robotBuilder.AddSection(section => 
-                                section.AddUserAgent("*").Disallow("/")));
+                        var ruleSetName = ruleSetSection.Key;
+                        if (options.RuleSets.TryGetValue(ruleSetName, out var ruleSet))
+                        {
+                            var allowSection = ruleSetSection.GetSection("Allow");
+                            if (allowSection.Exists())
+                            {
+                                ruleSet.Allow = ParseAllowRules(allowSection);
+                            }
+                        }
                     }
                 }
-            }
+            });
+
+            // Register dynamic provider for hot reload support
+            builder.Services.AddScoped<IRobotsTxtProvider, DynamicRobotsTxtProvider>();
 
             builder.Services.Configure<UmbracoPipelineOptions>(options =>
             {
@@ -85,83 +57,50 @@ namespace Crumpled.RobotsTxt
             return builder;
         }
 
-        public static SectionBuilder Allow(this SectionBuilder section, string[] path)
+        private static Dictionary<string, object> ParseAllowRules(IConfigurationSection allowSection)
         {
-            foreach (var p in path)
-            {
-                section.Allow(p);
-            }
-            return section;
-        }
+            var result = new Dictionary<string, object>();
 
-        public static SectionBuilder Disallow(this SectionBuilder section, string[] path)
-        {
-            foreach (var p in path)
+            foreach (var child in allowSection.GetChildren())
             {
-                section.Disallow(p);
-            }
-            return section;
-        }
+                var userAgent = child.Key;
 
-        private static RobotsTxtOptionsBuilder BuildRulesFromConfig(this RobotsTxtOptionsBuilder builder, RuleSet? ruleSet, string? sitemapUrl)
-        {
-            if (ruleSet?.Allow != null)
-            {
-                foreach (var allowRule in ruleSet.Allow)
+                // Check if this is a simple array (has numeric keys) or a complex object (has Paths/ContentSignal)
+                var pathsChild = child.GetSection("Paths");
+                if (pathsChild.Exists())
                 {
-                    builder.AddSection(section => section.AddUserAgent(allowRule.Key).Allow(allowRule.Value));
+                    // Complex format with Paths and optionally ContentSignal
+                    var allowRule = new AllowRule
+                    {
+                        Paths = pathsChild.Get<string[]>()
+                    };
+
+                    var contentSignalChild = child.GetSection("ContentSignal");
+                    if (contentSignalChild.Exists())
+                    {
+                        allowRule.ContentSignal = new ContentSignalConfig
+                        {
+                            Path = contentSignalChild.GetValue<string?>("Path"),
+                            AiTrain = contentSignalChild.GetValue<bool?>("AiTrain"),
+                            Search = contentSignalChild.GetValue<bool?>("Search"),
+                            AiInput = contentSignalChild.GetValue<bool?>("AiInput")
+                        };
+                    }
+
+                    result[userAgent] = allowRule;
+                }
+                else
+                {
+                    // Simple array format
+                    var paths = child.Get<string[]>();
+                    if (paths != null)
+                    {
+                        result[userAgent] = paths;
+                    }
                 }
             }
 
-            if (ruleSet?.Disallow != null)
-            {
-                foreach (var disAllowRule in ruleSet.Disallow)
-                {
-                    builder.AddSection(section => section.AddUserAgent(disAllowRule.Key).Disallow(disAllowRule.Value));
-                }
-            }
-
-            if (sitemapUrl != null)
-            {
-                builder.AddSitemap(sitemapUrl);
-            }
-
-            return builder;
-        }
-
-        private static RobotsTxtOptions GetRobotsTxtOptions(this IConfiguration configuration)
-        {
-            var robotsTxtOptions = new RobotsTxtOptions();
-            var robotsTxtOptionsSection = GetRobotsTxtOptionsSection(configuration);
-            robotsTxtOptionsSection.Bind(robotsTxtOptions);
-
-            return robotsTxtOptions;
-        }
-
-        private static string? GetSitemapUrl(string? sitemapDomain)
-        {
-            if (string.IsNullOrWhiteSpace(sitemapDomain))
-            {
-                return null;
-            }
-
-            if (!sitemapDomain.EndsWith("/"))
-            {
-                sitemapDomain += "/";
-            }
-
-            if (!sitemapDomain.StartsWith("http"))
-            {
-                sitemapDomain = "https://" + sitemapDomain;
-            }
-
-            return sitemapDomain + "sitemap.xml";
-        }
-
-        private static IConfigurationSection GetRobotsTxtOptionsSection(this IConfiguration configuration)
-        {
-            var robotsTxtOptionsSection = configuration.GetSection("Crumpled").GetSection(RobotsTxtOptions.RobotsTxtSection);
-            return robotsTxtOptionsSection;
+            return result;
         }
     }
 }

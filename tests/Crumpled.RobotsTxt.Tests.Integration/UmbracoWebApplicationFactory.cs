@@ -18,7 +18,7 @@ public class UmbracoWebApplicationFactory : WebApplicationFactory<Program>
     {
         // Use a unique test database path
         _dbPath = Path.Combine(Path.GetTempPath(), $"UmbracoTest_{Guid.NewGuid()}.db");
-        
+
         // Copy committed seed database to test location for fast startup (if it exists)
         if (File.Exists(_seedDbPath))
         {
@@ -32,7 +32,7 @@ public class UmbracoWebApplicationFactory : WebApplicationFactory<Program>
         builder.ConfigureLogging(logging =>
         {
             logging.SetMinimumLevel(LogLevel.None);
-            logging.AddFilter((category, level) => 
+            logging.AddFilter((category, level) =>
             {
                 // Suppress all Fatal/Critical logs (shutdown errors)
                 if (level >= LogLevel.Critical)
@@ -41,7 +41,7 @@ public class UmbracoWebApplicationFactory : WebApplicationFactory<Program>
                 return true;
             });
         });
-        
+
         builder.ConfigureAppConfiguration((context, config) =>
         {
             // Use file-based SQLite database for testing (in-memory doesn't work with Umbraco's connection pooling)
@@ -49,10 +49,10 @@ public class UmbracoWebApplicationFactory : WebApplicationFactory<Program>
             {
                 ["ConnectionStrings:umbracoDbDSN"] = $"Data Source={_dbPath}",
                 ["ConnectionStrings:umbracoDbDSN_ProviderName"] = "Microsoft.Data.Sqlite",
-                
+
                 // Speed up startup
                 ["Umbraco:CMS:Content:Notifications:MaxProcessingDelayMilliseconds"] = "0",
-                
+
                 // Suppress Serilog Fatal logs from shutdown
                 ["Serilog:MinimumLevel:Override:Microsoft.Extensions.Hosting"] = "6",
                 ["Serilog:MinimumLevel:Override:Microsoft.Hosting.Lifetime"] = "6",
@@ -67,7 +67,7 @@ public class UmbracoWebApplicationFactory : WebApplicationFactory<Program>
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        
+
         if (disposing && File.Exists(_dbPath))
         {
             try
