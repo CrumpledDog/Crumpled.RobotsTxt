@@ -81,9 +81,6 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
-    - name: Dotnet Format check
-      run: dotnet format --verify-no-changes --verbosity diagnostic
-
     - name: Cache NuGet
       id: nuget-packages
       uses: actions/cache@v5
@@ -92,6 +89,9 @@ jobs:
         key: nuget-cache-${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj*') }}
         restore-keys: |
           nuget-cache-${{ runner.os }}-nuget-
+
+    - name: Dotnet Format check
+      run: dotnet format --verify-no-changes --verbosity diagnostic
 
     - name: Update Version Files
       id: update-version
