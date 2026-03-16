@@ -383,3 +383,32 @@ User-agent: *
   "AiInput": false
 }
 ```
+
+## Cache Control
+
+Control how long browsers and crawlers should cache the robots.txt file using the `MaxAge` property. This sets the `Cache-Control: max-age` header in the HTTP response.
+
+```json
+"Crumpled": {
+  "RobotsTxt": {
+    "MaxAge": "1.00:00:00"  // 1 day (default)
+  }
+}
+```
+
+**TimeSpan Format Examples:**
+- `"1.00:00:00"` - 1 day (default)
+- `"12:00:00"` - 12 hours
+- `"00:30:00"` - 30 minutes
+- `"7.00:00:00"` - 7 days
+
+**Default:** 1 day (86,400 seconds)
+
+**Why it matters:**
+- robots.txt doesn't change frequently, so longer cache times reduce server load
+- Search engines and crawlers respect cache headers to minimize repeated requests
+- Shorter cache times allow faster propagation of rule changes if needed
+
+**Recommended values:**
+- **Production sites:** `1.00:00:00` to `7.00:00:00` (1-7 days) - rules rarely change
+- **Active development:** `00:30:00` to `01:00:00` (30 minutes - 1 hour) - faster updates during testing
