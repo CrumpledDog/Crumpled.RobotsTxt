@@ -384,6 +384,54 @@ User-agent: *
 }
 ```
 
+## Crawl-delay
+
+Control how frequently crawlers can request pages from your site on a per-user-agent basis. The `Crawl-delay` directive requests crawlers to wait a specified number of seconds between successive requests.
+
+**Configuration:**
+
+Crawl-delay is configured per user-agent in the Allow rules using the complex format:
+
+```json
+"RuleSets": {
+  "Production": {
+    "Allow": {
+      "Googlebot": {
+        "Paths": ["/"],
+        "CrawlDelay": 10
+      },
+      "Bingbot": {
+        "Paths": ["/"],
+        "CrawlDelay": 5
+      }
+    }
+  }
+}
+```
+
+This generates:
+```
+User-agent: Bingbot
+Crawl-delay: 5
+Allow: /
+
+User-agent: Googlebot
+Crawl-delay: 10
+Allow: /
+```
+
+**Notes:**
+- Crawl-delay is specified in **seconds** (integer)
+- Only available in the complex Allow rule format (not simple string array)
+- If a user-agent appears in both Allow and Disallow with different Crawl-delay values, **Allow takes precedence**
+- Not all crawlers respect Crawl-delay (Google and Bing use their own rate limiting via Search Console/Webmaster Tools)
+- Typical values: 1-10 seconds for busy sites, 0.5-2 seconds for moderate traffic
+
+**Use cases:**
+- Protect server resources during peak traffic
+- Slow down aggressive crawlers
+- Different rates for different bots (e.g., slower for less important crawlers)
+
 ## Cache Control
 
 Control how long browsers and crawlers should cache the robots.txt file using the `MaxAge` property. This sets the `Cache-Control: max-age` header in the HTTP response.

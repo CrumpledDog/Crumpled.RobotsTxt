@@ -86,6 +86,12 @@ namespace Crumpled.RobotsTxt
                         };
                     }
 
+                    var crawlDelay = child.GetValue<int?>("CrawlDelay");
+                    if (crawlDelay.HasValue)
+                    {
+                        allowRule.CrawlDelay = crawlDelay;
+                    }
+
                     result[userAgent] = allowRule;
                 }
                 else

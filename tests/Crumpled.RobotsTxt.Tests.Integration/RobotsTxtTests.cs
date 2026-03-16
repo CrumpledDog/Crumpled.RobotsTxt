@@ -177,20 +177,63 @@ public class RobotsTxtTests : IClassFixture<UmbracoWebApplicationFactory>
         // Assert - specific user agents should appear before wildcard "*"
         var googlebotIndex = content.IndexOf("User-agent: googlebot", StringComparison.Ordinal);
         var oaiSearchBotIndex = content.IndexOf("User-agent: OAI-SearchBot", StringComparison.Ordinal);
-        var wildcardAllowIndex = content.IndexOf("User-agent: *\nContent-Signal:", StringComparison.Ordinal);
-        var wildcardDisallowIndex = content.IndexOf("User-agent: *\nDisallow:", StringComparison.Ordinal);
+        var wildcardIndex = content.IndexOf("User-agent: *\n", StringComparison.Ordinal);
 
         // All should be found
         Assert.True(googlebotIndex > 0, "googlebot user-agent not found");
         Assert.True(oaiSearchBotIndex > 0, "OAI-SearchBot user-agent not found");
-        Assert.True(wildcardAllowIndex > 0, "Wildcard Allow section not found");
-        Assert.True(wildcardDisallowIndex > 0, "Wildcard Disallow section not found");
+        Assert.True(wildcardIndex > 0, "Wildcard user-agent section not found");
 
-        // Specific user agents should come before wildcard in Allow rules
-        Assert.True(googlebotIndex < wildcardAllowIndex, "googlebot should appear before wildcard * in Allow rules");
-        Assert.True(oaiSearchBotIndex < wildcardAllowIndex, "OAI-SearchBot should appear before wildcard * in Allow rules");
+        // Specific user agents should come before wildcard
+        Assert.True(googlebotIndex < wildcardIndex, "googlebot should appear before wildcard *");
+        Assert.True(oaiSearchBotIndex < wildcardIndex, "OAI-SearchBot should appear before wildcard *");
 
-        // Wildcard Allow should come before wildcard Disallow
-        Assert.True(wildcardAllowIndex < wildcardDisallowIndex, "Wildcard Allow should appear before wildcard Disallow");
+        // Verify wildcard section contains both Allow and Disallow (combined in one section)
+        var wildcardSection = content.Substring(wildcardIndex);
+        var nextUserAgentIndex = wildcardSection.IndexOf("\nUser-agent:", 1, StringComparison.Ordinal);
+        if (nextUserAgentIndex > 0)
+        {
+            wildcardSection = wildcardSection.Substring(0, nextUserAgentIndex);
+        }
+
+        Assert.Contains("Content-Signal:", wildcardSection);
+        Assert.Contains("Allow: /", wildcardSection);
+        Assert.Contains("Disallow:", wildcardSection);
+    }
+
+    [Fact]
+    public async Task RobotsTxt_ProductionSite_IncludesCrawlDelay()
+    {
+        // Arrange
+        _client.DefaultRequestHeaders.Host = "localhost:44390";
+
+        // Act
+        var response = await _client.GetAsync("/robots.txt");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Normalize line endings for cross-platform compatibility
+        content = content.Replace("\r\n", "\n");
+
+        // Assert - googlebot should have Crawl-delay directive
+        Assert.Contains("User-agent: googlebot", content);
+
+        // Extract googlebot section
+        var googlebotIndex = content.IndexOf("User-agent: googlebot", StringComparison.Ordinal);
+        var googlebotSection = content.Substring(googlebotIndex);
+        var nextUserAgentIndex = googlebotSection.IndexOf("\nUser-agent:", 1, StringComparison.Ordinal);
+        if (nextUserAgentIndex > 0)
+        {
+            googlebotSection = googlebotSection.Substring(0, nextUserAgentIndex);
+        }
+
+        // Verify Crawl-delay appears after Content-Signal but before Allow
+        Assert.Contains("Crawl-delay: 2", googlebotSection);
+
+        var crawlDelayIndex = googlebotSection.IndexOf("Crawl-delay:", StringComparison.Ordinal);
+        var contentSignalIndex = googlebotSection.IndexOf("Content-Signal:", StringComparison.Ordinal);
+        var allowIndex = googlebotSection.IndexOf("Allow:", StringComparison.Ordinal);
+
+        Assert.True(contentSignalIndex < crawlDelayIndex, "Content-Signal should appear before Crawl-delay");
+        Assert.True(crawlDelayIndex < allowIndex, "Crawl-delay should appear before Allow");
     }
 }

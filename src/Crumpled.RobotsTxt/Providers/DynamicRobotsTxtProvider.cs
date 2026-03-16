@@ -109,72 +109,89 @@ internal class DynamicRobotsTxtProvider(
             builder.AppendLine();
         }
 
-        // Add Allow rules with Content-Signal
+        // Combine Allow and Disallow rules by user-agent
         // Order: specific user agents first, wildcard "*" last (robots.txt best practice)
+        var allUserAgents = new HashSet<string>();
+
         if (ruleSet.Allow != null)
         {
-            var orderedRules = ruleSet.Allow
-                .OrderBy(r => r.Key == "*" ? 1 : 0)  // Wildcard last
-                .ThenBy(r => r.Key, StringComparer.OrdinalIgnoreCase); // Then alphabetically
+            foreach (var key in ruleSet.Allow.Keys)
+                allUserAgents.Add(key);
+        }
 
-            foreach (var allowRule in orderedRules)
+        if (ruleSet.Disallow != null)
+        {
+            foreach (var key in ruleSet.Disallow.Keys)
+                allUserAgents.Add(key);
+        }
+
+        var orderedUserAgents = allUserAgents
+            .OrderBy(ua => ua == "*" ? 1 : 0)  // Wildcard last
+            .ThenBy(ua => ua, StringComparer.OrdinalIgnoreCase); // Then alphabetically
+
+        foreach (var userAgent in orderedUserAgents)
+        {
+            builder.AppendLine($"User-agent: {userAgent}");
+
+            // Add Content-Signal and Crawl-delay if this user agent has Allow rules
+            if (ruleSet.Allow != null && ruleSet.Allow.TryGetValue(userAgent, out var allowValue))
             {
-                var userAgent = allowRule.Key;
-                var ruleValue = allowRule.Value;
-
-                string[]? paths = null;
                 ContentSignalConfig? agentContentSignal = null;
+                int? agentCrawlDelay = null;
 
-                if (ruleValue is AllowRule complexRule)
+                if (allowValue is AllowRule complexRule)
                 {
-                    paths = complexRule.Paths;
                     agentContentSignal = complexRule.ContentSignal;
+                    agentCrawlDelay = complexRule.CrawlDelay;
                 }
-                else if (ruleValue is string[] stringArray)
+
+                // Apply agent-specific ContentSignal if present, otherwise use default from RuleSet
+                var contentSignalToApply = agentContentSignal ?? ruleSet.ContentSignal;
+                if (contentSignalToApply != null)
+                {
+                    AppendContentSignal(builder, contentSignalToApply);
+                }
+
+                // Add Crawl-delay if specified (Allow takes precedence)
+                if (agentCrawlDelay.HasValue)
+                {
+                    builder.AppendLine($"Crawl-delay: {agentCrawlDelay.Value}");
+                }
+            }
+
+            // Add Disallow rules first (convention: Disallow before Allow)
+            if (ruleSet.Disallow != null && ruleSet.Disallow.TryGetValue(userAgent, out var disallowPaths))
+            {
+                foreach (var path in disallowPaths)
+                {
+                    builder.AppendLine($"Disallow: {path}");
+                }
+            }
+
+            // Add Allow rules for this user agent
+            if (ruleSet.Allow != null && ruleSet.Allow.TryGetValue(userAgent, out var allowRuleValue))
+            {
+                string[]? paths = null;
+
+                if (allowRuleValue is AllowRule complexAllowRule)
+                {
+                    paths = complexAllowRule.Paths;
+                }
+                else if (allowRuleValue is string[] stringArray)
                 {
                     paths = stringArray;
                 }
 
                 if (paths != null)
                 {
-                    builder.AppendLine($"User-agent: {userAgent}");
-
-                    // Apply agent-specific ContentSignal if present, otherwise use default from RuleSet
-                    var contentSignalToApply = agentContentSignal ?? ruleSet.ContentSignal;
-                    if (contentSignalToApply != null)
-                    {
-                        AppendContentSignal(builder, contentSignalToApply);
-                    }
-
                     foreach (var path in paths)
                     {
                         builder.AppendLine($"Allow: {path}");
                     }
-
-                    builder.AppendLine();
                 }
             }
-        }
 
-        // Add Disallow rules (no Content-Signal)
-        // Order: specific user agents first, wildcard "*" last (robots.txt best practice)
-        if (ruleSet.Disallow != null)
-        {
-            var orderedRules = ruleSet.Disallow
-                .OrderBy(r => r.Key == "*" ? 1 : 0)  // Wildcard last
-                .ThenBy(r => r.Key, StringComparer.OrdinalIgnoreCase); // Then alphabetically
-
-            foreach (var disallowRule in orderedRules)
-            {
-                builder.AppendLine($"User-agent: {disallowRule.Key}");
-
-                foreach (var path in disallowRule.Value)
-                {
-                    builder.AppendLine($"Disallow: {path}");
-                }
-
-                builder.AppendLine();
-            }
+            builder.AppendLine();
         }
 
         // Add sitemap
