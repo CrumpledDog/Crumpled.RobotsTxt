@@ -80,6 +80,9 @@ jobs:
     - uses: actions/setup-dotnet@v5
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Dotnet Format check
+      run: dotnet format --verify-no-changes --verbosity diagnostic
 
     - name: Cache NuGet
       id: nuget-packages

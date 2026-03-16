@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -8,9 +7,11 @@ using Umbraco.Cms.Web.Common.ApplicationBuilder;
 using Crumpled.RobotsTxt.Core;
 using Crumpled.RobotsTxt.Providers;
 
+#pragma warning disable IDE0130
 namespace Crumpled.RobotsTxt
+#pragma warning restore IDE0130
 {
-    public static partial class IUmbracoBuilderExtensions
+    public static partial class UmbracoBuilderExtensions
     {
         public static IUmbracoBuilder AddCrumpledRobotsTxt(this IUmbracoBuilder builder)
         {

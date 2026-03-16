@@ -1,6 +1,8 @@
 using System.Text;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+
 using Crumpled.RobotsTxt.Core;
 
 namespace Crumpled.RobotsTxt.Providers;
@@ -8,23 +10,15 @@ namespace Crumpled.RobotsTxt.Providers;
 /// <summary>
 /// Dynamic robots.txt provider that supports hot reload of configuration changes.
 /// </summary>
-internal class DynamicRobotsTxtProvider : IRobotsTxtProvider
+internal class DynamicRobotsTxtProvider(
+    IOptionsMonitor<RobotsTxtOptions> optionsMonitor,
+    IHttpContextAccessor httpContextAccessor)
+    : IRobotsTxtProvider
 {
-    private readonly IOptionsMonitor<RobotsTxtOptions> _optionsMonitor;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public DynamicRobotsTxtProvider(
-        IOptionsMonitor<RobotsTxtOptions> optionsMonitor,
-        IHttpContextAccessor httpContextAccessor)
-    {
-        _optionsMonitor = optionsMonitor;
-        _httpContextAccessor = httpContextAccessor;
-    }
-
     public Task<RobotsTxtResult> GetResultAsync(CancellationToken cancellationToken)
     {
-        var options = _optionsMonitor.CurrentValue;
-        var httpContext = _httpContextAccessor.HttpContext;
+        var options = optionsMonitor.CurrentValue;
+        var httpContext = httpContextAccessor.HttpContext;
 
         var robotsTxtContent = BuildRobotsTxtContent(options, httpContext);
         var contentBytes = Encoding.UTF8.GetBytes(robotsTxtContent).AsMemory();
@@ -33,7 +27,7 @@ internal class DynamicRobotsTxtProvider : IRobotsTxtProvider
         return Task.FromResult(result);
     }
 
-    private string BuildRobotsTxtContent(RobotsTxtOptions options, HttpContext? httpContext)
+    private static string BuildRobotsTxtContent(RobotsTxtOptions options, HttpContext? httpContext)
     {
         RuleSet? ruleSet = null;
         string? sitemapUrl = null;

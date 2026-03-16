@@ -1,4 +1,6 @@
-﻿namespace Crumpled.RobotsTxt
+﻿#pragma warning disable IDE0130
+namespace Crumpled.RobotsTxt
+#pragma warning restore IDE0130
 {
     public class RobotsTxtOptions
     {
