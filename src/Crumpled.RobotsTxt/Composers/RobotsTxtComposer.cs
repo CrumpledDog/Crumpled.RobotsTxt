@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
 
-namespace Crumpled.RobotsTxt
+namespace Crumpled.RobotsTxt.Composers
 {
     public class RobotsTxtComposer : IComposer
     {

@@ -1,5 +1,9 @@
 name: Build and Package
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   PATH_TO_EXTENSION: "src/Crumpled.RobotsTxt"
   DOTNET_VERSION: '10'
@@ -44,6 +48,14 @@ jobs:
             @semantic-release/github
             conventional-changelog-conventionalcommits
 
+      - name: Check Release
+        run: |
+          if [ -z "${{ steps.semantic.outputs.new_release_version }}" ]; then
+            echo "::error::No release version generated. Ensure there are conventional commits since the last release."
+            exit 1
+          fi
+          echo "Release version: ${{ steps.semantic.outputs.new_release_version }}"
+
       - name: Echo the version
         run: |
           echo "New release version: '${{ steps.semantic.outputs.new_release_version }}'"
@@ -68,29 +80,36 @@ jobs:
     - uses: actions/setup-dotnet@v5
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
-
+    
     - name: Cache NuGet
       id: nuget-packages
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.nuget/packages
         key: nuget-cache-${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj*') }}
         restore-keys: |
           nuget-cache-${{ runner.os }}-nuget-
 
+    - name: Dotnet Format check
+      run: dotnet format --verify-no-changes --verbosity diagnostic
+
     - name: Update Version Files
-      run: .github/scripts/update-version-files.sh "${{ needs.setup.outputs.semver }}" "${{ env.PATH_TO_EXTENSION }}"
+      id: update-version
+      uses: CrumpledDog/Crumpled.Umbraco.Package.Actions/update-version-files@main
+      with:
+        semver: ${{ needs.setup.outputs.semver }}
+        path-to-extension: ${{ env.PATH_TO_EXTENSION }}
 
     - name: Build slnx
-      run: dotnet build ${{ github.workspace }}/*.slnx -c Release
+      run: dotnet build ${{ github.workspace }}/*.slnx -c Release /maxcpucount:1
 
     - name: Run Integration Tests
       run: |
-        dotnet test tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj --configuration Release --framework net8.0 --logger "trx;LogFileName=test-results-net8.0.trx" --logger "GitHubActions" --logger "console;verbosity=normal"
-        dotnet test tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj --configuration Release --framework net10.0 --logger "trx;LogFileName=test-results-net10.0.trx" --logger "GitHubActions" --logger "console;verbosity=normal"
+        dotnet test tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj --configuration Release --framework net8.0 --no-build --logger "trx;LogFileName=test-results-net8.0.trx" --logger "GitHubActions" --logger "console;verbosity=normal"
+        dotnet test tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj --configuration Release --framework net10.0 --no-build --logger "trx;LogFileName=test-results-net10.0.trx" --logger "GitHubActions" --logger "console;verbosity=normal"
 
     - name: Publish Test Results (Umbraco v13)
-      uses: dorny/test-reporter@v1
+      uses: dorny/test-reporter@v2
       if: always()
       with:
         name: Integration Test Results (Umbraco v13)
@@ -99,7 +118,7 @@ jobs:
         fail-on-error: true
 
     - name: Publish Test Results (Umbraco v17)
-      uses: dorny/test-reporter@v1
+      uses: dorny/test-reporter@v2
       if: always()
       with:
         name: Integration Test Results (Umbraco v17)
@@ -109,15 +128,32 @@ jobs:
 
     - name: Pack NuGet Package
       working-directory: ${{ env.PATH_TO_EXTENSION }}
-      run: dotnet pack --configuration Release /p:PackageVersion=${{ needs.setup.outputs.semver }}
+      run: dotnet pack --configuration Release /p:PackageVersion=${{ needs.setup.outputs.semver }} /p:FileVersion=${{ steps.update-version.outputs.file-version }}
+    
+    - name: Install Package Validation Tool
+      if: ${{ needs.setup.outputs.new_release_published == 'true' }}
+      run: dotnet tool install -g dotnet-validate --prerelease
+    
+    - name: Validate NuGet Package
+      if: ${{ needs.setup.outputs.new_release_published == 'true' }}
+      run: dotnet validate package local ${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.nupkg
     
     - name: Create GitHub Release
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: .github/scripts/create-release-notes.sh "${{ needs.setup.outputs.semver }}" "Crumpled.RobotsTxt" "https://nuget.pkg.github.com/CrumpledDog/index.json"
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ needs.setup.outputs.semver }}
+        name: v${{ needs.setup.outputs.semver }}
+        generate_release_notes: true
+        prerelease: ${{ contains(needs.setup.outputs.semver, '-') }}
+        body: |
+          ## Installation
+          
+          ```bash
+          ${{ contains(needs.setup.outputs.semver, '-') && format('dotnet add package Crumpled.RobotsTxt --version {0} --source https://nuget.pkg.github.com/CrumpledDog/index.json', needs.setup.outputs.semver) || format('dotnet add package Crumpled.RobotsTxt --version {0}', needs.setup.outputs.semver) }}
+          ```
     
-    - name: Login
+    - name: Add GitHub Packages Source
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
       run: dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/CrumpledDog/index.json"
 

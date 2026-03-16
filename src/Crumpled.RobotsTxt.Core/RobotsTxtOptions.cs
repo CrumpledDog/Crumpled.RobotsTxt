@@ -55,6 +55,7 @@ public class RobotsTxtSection
     public List<string> Comments;
     public List<string> UserAgents;
     public List<RobotsTxtRule> Rules;
+    public ContentSignalSettings? ContentSignal { get; set; }
 
     public void Build(StringBuilder builder)
     {
@@ -73,6 +74,11 @@ public class RobotsTxtSection
             builder
                 .Append("User-agent: ")
                 .AppendLine(userAgent);
+        }
+
+        if (ContentSignal != null)
+        {
+            ContentSignal.Build(builder);
         }
 
         foreach (var rule in Rules)
@@ -147,5 +153,39 @@ public class RobotsTxtCrawlCustomRule : RobotsTxtRule
             .Append(_directive)
             .Append(": ")
             .AppendLine(Value);
+    }
+}
+
+public class ContentSignalSettings
+{
+    public string? Path { get; set; }
+    public bool? AiTrain { get; set; }
+    public bool? Search { get; set; }
+    public bool? AiInput { get; set; }
+
+    public void Build(StringBuilder builder)
+    {
+        var signals = new List<string>();
+
+        if (AiTrain.HasValue)
+            signals.Add($"ai-train={(AiTrain.Value ? "yes" : "no")}");
+
+        if (Search.HasValue)
+            signals.Add($"search={(Search.Value ? "yes" : "no")}");
+
+        if (AiInput.HasValue)
+            signals.Add($"ai-input={(AiInput.Value ? "yes" : "no")}");
+
+        if (signals.Count > 0)
+        {
+            builder.Append("Content-Signal:");
+
+            if (!string.IsNullOrWhiteSpace(Path))
+            {
+                builder.Append($" path=\"{Path}\"");
+            }
+
+            builder.Append(' ').AppendLine(string.Join(", ", signals));
+        }
     }
 }
