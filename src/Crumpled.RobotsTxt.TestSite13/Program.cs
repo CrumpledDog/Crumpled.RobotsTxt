@@ -7,7 +7,7 @@ builder.CreateUmbracoBuilder()
     .AddWebsite()
     .AddDeliveryApi()
     .AddComposers()
-  //  .AddCrumpledRobotsTxt()
+    //  .AddCrumpledRobotsTxt()
     .Build();
 
 
@@ -23,9 +23,9 @@ app.UseUmbraco()
     })
     .WithEndpoints(u =>
     {
-	    u.UseBackOfficeEndpoints();
-	    u.UseWebsiteEndpoints();
-	});
+        u.UseBackOfficeEndpoints();
+        u.UseWebsiteEndpoints();
+    });
 
 await app.RunAsync();
 

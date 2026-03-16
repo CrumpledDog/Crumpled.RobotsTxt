@@ -32,3 +32,60 @@ services.AddStaticRobotsTxt(builder =>
 
 app.UseRobotsTxt();
 ```
+
+### Content Signals Support
+
+Add Content Signals ([contentsignals.org](https://contentsignals.org/)) to control AI training and content usage:
+
+```csharp
+services.AddStaticRobotsTxt(builder =>
+    builder
+        .AddSection(section =>
+            section
+                .AddUserAgent("*")
+                .WithContentSignal(cs => cs.AllowSearchOnly())  // search=yes, ai-train=no, ai-input=no
+                .Allow("/")
+        )
+        .AddSitemap("https://example.com/sitemap.xml")
+);
+```
+
+Or specify individual permissions:
+
+```csharp
+services.AddStaticRobotsTxt(builder =>
+    builder
+        .AddSection(section =>
+            section
+                .AddUserAgent("*")
+                .WithContentSignal(cs => cs
+                    .AllowAiTrain(false)
+                    .AllowSearch(true)
+                    .AllowAiInput(false))
+                .Allow("/")
+        )
+);
+```
+
+Path-specific content signals:
+
+```csharp
+services.AddStaticRobotsTxt(builder =>
+    builder
+        .AddSection(section =>
+            section
+                .AddUserAgent("*")
+                .WithContentSignal(cs => cs
+                    .ForPath("/blog/")
+                    .AllowSearch(true)
+                    .AllowAiTrain(false))
+                .Allow("/blog/")
+        )
+);
+```
+
+Convenience methods:
+- `DisallowAll()` - Block all AI actions
+- `AllowSearchOnly()` - Allow search indexing only
+- `AllowSearchAndAiInput()` - Allow search and AI input (no training)
+- `AllowAll()` - Allow all AI actions

@@ -11,8 +11,16 @@
 
     public class RuleSet
     {
-        public Dictionary<string, string[]>? Allow { get; set; }
+        public bool IncludeContentSignalInstructions { get; set; } = false;
+        public ContentSignalConfig? ContentSignal { get; set; }
+        public Dictionary<string, object>? Allow { get; set; }
         public Dictionary<string, string[]>? Disallow { get; set; }
+    }
+
+    public class AllowRule
+    {
+        public string[]? Paths { get; set; }
+        public ContentSignalConfig? ContentSignal { get; set; }
     }
 
     public class SiteItem
@@ -20,5 +28,13 @@
         public required string HostNames { get; set; }
         public string? SiteMapDomain { get; set; }
         public required string RuleSet { get; set; }
+    }
+
+    public class ContentSignalConfig
+    {
+        public string? Path { get; set; }
+        public bool? AiTrain { get; set; }
+        public bool? Search { get; set; }
+        public bool? AiInput { get; set; }
     }
 }

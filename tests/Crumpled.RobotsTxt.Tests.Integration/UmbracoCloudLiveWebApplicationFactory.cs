@@ -21,13 +21,13 @@ public class UmbracoCloudLiveWebApplicationFactory : WebApplicationFactory<Progr
     public UmbracoCloudLiveWebApplicationFactory()
     {
         _dbPath = Path.Combine(Path.GetTempPath(), $"UmbracoCloudLiveTest_{Guid.NewGuid()}.db");
-        
+
         // Copy committed seed database to test location for fast startup (if it exists)
         if (File.Exists(_seedDbPath))
         {
             File.Copy(_seedDbPath, _dbPath, true);
         }
-        
+
         // Set the Umbraco Cloud environment variable
         Environment.SetEnvironmentVariable("UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME", "live");
     }
@@ -38,7 +38,7 @@ public class UmbracoCloudLiveWebApplicationFactory : WebApplicationFactory<Progr
         builder.ConfigureLogging(logging =>
         {
             logging.SetMinimumLevel(LogLevel.None);
-            logging.AddFilter((category, level) => 
+            logging.AddFilter((category, level) =>
             {
                 // Suppress all Fatal/Critical logs (shutdown errors)
                 if (level >= LogLevel.Critical)
@@ -47,17 +47,17 @@ public class UmbracoCloudLiveWebApplicationFactory : WebApplicationFactory<Progr
                 return true;
             });
         });
-        
+
         builder.ConfigureAppConfiguration((context, config) =>
         {
             var testConfig = new Dictionary<string, string>
             {
                 ["ConnectionStrings:umbracoDbDSN"] = $"Data Source={_dbPath}",
                 ["ConnectionStrings:umbracoDbDSN_ProviderName"] = "Microsoft.Data.Sqlite",
-                
+
                 // Speed up startup
                 ["Umbraco:CMS:Content:Notifications:MaxProcessingDelayMilliseconds"] = "0",
-                
+
                 // Suppress Serilog Fatal logs from shutdown
                 ["Serilog:MinimumLevel:Override:Microsoft.Extensions.Hosting"] = "6",
                 ["Serilog:MinimumLevel:Override:Microsoft.Hosting.Lifetime"] = "6",
@@ -72,10 +72,10 @@ public class UmbracoCloudLiveWebApplicationFactory : WebApplicationFactory<Progr
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        
+
         // Clean up environment variable
         Environment.SetEnvironmentVariable("UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME", null);
-        
+
         if (disposing && File.Exists(_dbPath))
         {
             try

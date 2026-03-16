@@ -108,6 +108,14 @@ public class RobotsTxtOptionsBuilder
             return this;
         }
 
+        public SectionBuilder WithContentSignal(Action<ContentSignalBuilder> configure)
+        {
+            var builder = new ContentSignalBuilder();
+            configure(builder);
+            Section.ContentSignal = builder.Build();
+            return this;
+        }
+
         public SectionBuilder Allow(string path)
         {
             Section.Rules.Add(new RobotsTxtAllowRule(path));
@@ -118,6 +126,77 @@ public class RobotsTxtOptionsBuilder
         {
             Section.Rules.Add(new RobotsTxtDisallowRule(path));
             return this;
+        }
+    }
+
+    public class ContentSignalBuilder
+    {
+        private readonly ContentSignalSettings _settings;
+
+        public ContentSignalBuilder()
+        {
+            _settings = new ContentSignalSettings();
+        }
+
+        public ContentSignalBuilder ForPath(string path)
+        {
+            _settings.Path = path;
+            return this;
+        }
+
+        public ContentSignalBuilder AllowAiTrain(bool allow = true)
+        {
+            _settings.AiTrain = allow;
+            return this;
+        }
+
+        public ContentSignalBuilder AllowSearch(bool allow = true)
+        {
+            _settings.Search = allow;
+            return this;
+        }
+
+        public ContentSignalBuilder AllowAiInput(bool allow = true)
+        {
+            _settings.AiInput = allow;
+            return this;
+        }
+
+        public ContentSignalBuilder DisallowAll()
+        {
+            _settings.AiTrain = false;
+            _settings.Search = false;
+            _settings.AiInput = false;
+            return this;
+        }
+
+        public ContentSignalBuilder AllowSearchOnly()
+        {
+            _settings.AiTrain = false;
+            _settings.Search = true;
+            _settings.AiInput = false;
+            return this;
+        }
+
+        public ContentSignalBuilder AllowSearchAndAiInput()
+        {
+            _settings.AiTrain = false;
+            _settings.Search = true;
+            _settings.AiInput = true;
+            return this;
+        }
+
+        public ContentSignalBuilder AllowAll()
+        {
+            _settings.AiTrain = true;
+            _settings.Search = true;
+            _settings.AiInput = true;
+            return this;
+        }
+
+        internal ContentSignalSettings Build()
+        {
+            return _settings;
         }
     }
 }
