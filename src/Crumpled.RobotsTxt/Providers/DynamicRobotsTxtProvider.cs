@@ -181,18 +181,12 @@ internal class DynamicRobotsTxtProvider(
             // Add path-specific Allow rules with Content-Signal
             foreach (var allowRule in allowRules.Where(r => r.ContentSignal != null))
             {
-                // Output Content-Signal with first path from this rule
-                var firstPath = allowRule.Paths?.FirstOrDefault();
-                if (allowRule.ContentSignal != null)
-                {
-                    AppendContentSignal(builder, allowRule.ContentSignal, firstPath);
-                }
-
-                // Output all Allow directives for this rule
-                if (allowRule.Paths != null)
+                // Output Content-Signal and Allow for each path
+                if (allowRule.Paths != null && allowRule.ContentSignal != null)
                 {
                     foreach (var path in allowRule.Paths)
                     {
+                        AppendContentSignal(builder, allowRule.ContentSignal, path);
                         builder.AppendLine($"Allow: {path}");
                     }
                 }
@@ -252,7 +246,7 @@ internal class DynamicRobotsTxtProvider(
 
         if (signals.Any())
         {
-            var pathPrefix = !string.IsNullOrWhiteSpace(path) ? $"{path} " : "";
+            var pathPrefix = !string.IsNullOrWhiteSpace(path) && path != "/" ? $"{path} " : "";
             builder.AppendLine($"Content-Signal: {pathPrefix}{string.Join(", ", signals)}");
         }
     }

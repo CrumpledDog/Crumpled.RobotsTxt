@@ -166,10 +166,11 @@ This generates:
 User-agent: googlebot
 Content-Signal: /blog ai-train=no, search=yes, ai-input=no
 Allow: /blog
+Content-Signal: /news ai-train=no, search=yes, ai-input=no
 Allow: /news
 ```
 
-Both `/blog` and `/news` paths share the same Content-Signal (the path shown is the first from the Paths array).
+Each path gets its own Content-Signal directive with the same settings.
 
 #### Path-Specific Content Signals
 
@@ -203,8 +204,9 @@ This generates:
 User-agent: bingbot
 Content-Signal: /blog ai-train=yes, search=yes, ai-input=no
 Allow: /blog
+Content-Signal: /news ai-train=yes, search=yes, ai-input=no
 Allow: /news
-Content-Signal: / ai-train=no, search=yes, ai-input=no
+Content-Signal: ai-train=no, search=yes, ai-input=no
 Allow: /
 ```
 
@@ -312,8 +314,9 @@ This generates:
 # ... (legal header text) ...
 
 User-agent: googlebot
-Content-Signal: ai-train=no, search=yes, ai-input=no
+Content-Signal: /blog ai-train=no, search=yes, ai-input=no
 Allow: /blog
+Content-Signal: /news ai-train=no, search=yes, ai-input=no
 Allow: /news
 
 User-agent: OAI-SearchBot
@@ -332,7 +335,7 @@ Disallow: /cdn-cgi/
 - Specific user agents (googlebot, OAI-SearchBot) appear before the wildcard `*`
 - Each user-agent gets its own ContentSignal - googlebot and OAI-SearchBot have restricted permissions, while `*` allows everything
 - The legal header is included because `IncludeContentSignalInstructions: true`
-- googlebot's single Content-Signal applies to both `/blog` and `/news` paths
+- Each path gets its own Content-Signal directive paired with its Allow directive
 
 #### Simple and Complex Allow Rules
 

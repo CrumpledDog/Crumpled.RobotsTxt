@@ -262,24 +262,27 @@ public class RobotsTxtTests : IClassFixture<UmbracoWebApplicationFactory>
             bingbotSection = bingbotSection.Substring(0, nextUserAgentIndex);
         }
 
-        // Verify we have two Content-Signal directives with paths
+        // Verify we have three Content-Signal directives - two with paths, one without (root)
         Assert.Contains("Content-Signal: /blog ai-train=yes", bingbotSection);
-        Assert.Contains("Content-Signal: / ai-train=no", bingbotSection);
+        Assert.Contains("Content-Signal: /news ai-train=yes", bingbotSection);
+        Assert.Contains("Content-Signal: ai-train=no", bingbotSection);
 
-        // Verify each Content-Signal is followed by corresponding Allow directives
+        // Verify each Content-Signal is followed by its corresponding Allow directive
         var blogContentSignalIndex = bingbotSection.IndexOf("Content-Signal: /blog", StringComparison.Ordinal);
         var blogAllowIndex = bingbotSection.IndexOf("Allow: /blog", StringComparison.Ordinal);
+        var newsContentSignalIndex = bingbotSection.IndexOf("Content-Signal: /news", StringComparison.Ordinal);
         var newsAllowIndex = bingbotSection.IndexOf("Allow: /news", StringComparison.Ordinal);
-        var rootContentSignalIndex = bingbotSection.IndexOf("Content-Signal: / ai-train=no", StringComparison.Ordinal);
+        var rootContentSignalIndex = bingbotSection.IndexOf("Content-Signal: ai-train=no", StringComparison.Ordinal);
         var rootAllowLines = bingbotSection.Split('\n').Where(l => l.Trim() == "Allow: /").ToList();
         Assert.Single(rootAllowLines); // Should have exactly one "Allow: /" directive
 
         var rootAllowIndex = bingbotSection.LastIndexOf("Allow: /", StringComparison.Ordinal);
 
-        // Verify ordering: Content-Signal for /blog, then Allow /blog and /news, then Content-Signal for /, then Allow /
+        // Verify ordering: Content-Signal /blog, Allow /blog, Content-Signal /news, Allow /news, Content-Signal (root), Allow /
         Assert.True(blogContentSignalIndex < blogAllowIndex, "Content-Signal /blog should appear before Allow /blog");
-        Assert.True(blogAllowIndex < newsAllowIndex, "Allow /blog should appear before Allow /news");
-        Assert.True(newsAllowIndex < rootContentSignalIndex, "Allow /news should appear before Content-Signal /");
-        Assert.True(rootContentSignalIndex < rootAllowIndex, "Content-Signal / should appear before Allow /");
+        Assert.True(blogAllowIndex < newsContentSignalIndex, "Allow /blog should appear before Content-Signal /news");
+        Assert.True(newsContentSignalIndex < newsAllowIndex, "Content-Signal /news should appear before Allow /news");
+        Assert.True(newsAllowIndex < rootContentSignalIndex, "Allow /news should appear before Content-Signal (root)");
+        Assert.True(rootContentSignalIndex < rootAllowIndex, "Content-Signal (root) should appear before Allow /");
     }
 }
