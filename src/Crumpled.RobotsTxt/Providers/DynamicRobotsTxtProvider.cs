@@ -133,30 +133,40 @@ internal class DynamicRobotsTxtProvider(
         {
             builder.AppendLine($"User-agent: {userAgent}");
 
-            // Add Content-Signal and Crawl-delay if this user agent has Allow rules
+            // Collect all AllowRules for this user agent
+            var allowRules = new List<AllowRule>();
+            string[]? simplePaths = null;
+
             if (ruleSet.Allow != null && ruleSet.Allow.TryGetValue(userAgent, out var allowValue))
             {
-                ContentSignalConfig? agentContentSignal = null;
-                int? agentCrawlDelay = null;
-
-                if (allowValue is AllowRule complexRule)
+                if (allowValue is AllowRule[] allowRuleArray)
                 {
-                    agentContentSignal = complexRule.ContentSignal;
-                    agentCrawlDelay = complexRule.CrawlDelay;
+                    allowRules.AddRange(allowRuleArray);
                 }
-
-                // Apply agent-specific ContentSignal if present, otherwise use default from RuleSet
-                var contentSignalToApply = agentContentSignal ?? ruleSet.ContentSignal;
-                if (contentSignalToApply != null)
+                else if (allowValue is AllowRule singleRule)
                 {
-                    AppendContentSignal(builder, contentSignalToApply);
+                    allowRules.Add(singleRule);
                 }
-
-                // Add Crawl-delay if specified (Allow takes precedence)
-                if (agentCrawlDelay.HasValue)
+                else if (allowValue is string[] stringArray)
                 {
-                    builder.AppendLine($"Crawl-delay: {agentCrawlDelay.Value}");
+                    simplePaths = stringArray;
                 }
+            }
+
+            // Determine if we should use RuleSet-level Content-Signal
+            // Only use it if no AllowRule has a path-specific ContentSignal
+            var hasPathSpecificContentSignal = allowRules.Any(r => r.ContentSignal != null);
+
+            if (!hasPathSpecificContentSignal && ruleSet.ContentSignal != null)
+            {
+                AppendContentSignal(builder, ruleSet.ContentSignal, null);
+            }
+
+            // Add Crawl-delay if any AllowRule specifies it
+            var crawlDelay = allowRules.FirstOrDefault(r => r.CrawlDelay.HasValue)?.CrawlDelay;
+            if (crawlDelay.HasValue)
+            {
+                builder.AppendLine($"Crawl-delay: {crawlDelay.Value}");
             }
 
             // Add Disallow rules first (convention: Disallow before Allow)
@@ -168,26 +178,44 @@ internal class DynamicRobotsTxtProvider(
                 }
             }
 
-            // Add Allow rules for this user agent
-            if (ruleSet.Allow != null && ruleSet.Allow.TryGetValue(userAgent, out var allowRuleValue))
+            // Add path-specific Allow rules with Content-Signal
+            foreach (var allowRule in allowRules.Where(r => r.ContentSignal != null))
             {
-                string[]? paths = null;
-
-                if (allowRuleValue is AllowRule complexAllowRule)
+                // Output Content-Signal with first path from this rule
+                var firstPath = allowRule.Paths?.FirstOrDefault();
+                if (allowRule.ContentSignal != null)
                 {
-                    paths = complexAllowRule.Paths;
-                }
-                else if (allowRuleValue is string[] stringArray)
-                {
-                    paths = stringArray;
+                    AppendContentSignal(builder, allowRule.ContentSignal, firstPath);
                 }
 
-                if (paths != null)
+                // Output all Allow directives for this rule
+                if (allowRule.Paths != null)
                 {
-                    foreach (var path in paths)
+                    foreach (var path in allowRule.Paths)
                     {
                         builder.AppendLine($"Allow: {path}");
                     }
+                }
+            }
+
+            // Add Allow rules without Content-Signal
+            foreach (var allowRule in allowRules.Where(r => r.ContentSignal == null))
+            {
+                if (allowRule.Paths != null)
+                {
+                    foreach (var path in allowRule.Paths)
+                    {
+                        builder.AppendLine($"Allow: {path}");
+                    }
+                }
+            }
+
+            // Add simple path-based Allow rules
+            if (simplePaths != null)
+            {
+                foreach (var path in simplePaths)
+                {
+                    builder.AppendLine($"Allow: {path}");
                 }
             }
 
@@ -203,7 +231,7 @@ internal class DynamicRobotsTxtProvider(
         return builder.ToString();
     }
 
-    private static void AppendContentSignal(StringBuilder builder, ContentSignalConfig contentSignal)
+    private static void AppendContentSignal(StringBuilder builder, ContentSignalConfig contentSignal, string? path = null)
     {
         var signals = new List<string>();
 
@@ -224,7 +252,8 @@ internal class DynamicRobotsTxtProvider(
 
         if (signals.Any())
         {
-            builder.AppendLine($"Content-Signal: {string.Join(", ", signals)}");
+            var pathPrefix = !string.IsNullOrWhiteSpace(path) ? $"{path} " : "";
+            builder.AppendLine($"Content-Signal: {pathPrefix}{string.Join(", ", signals)}");
         }
     }
 

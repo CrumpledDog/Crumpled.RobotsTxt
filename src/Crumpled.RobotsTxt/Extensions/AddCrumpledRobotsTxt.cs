@@ -69,43 +69,60 @@ namespace Crumpled.RobotsTxt
                 var pathsChild = child.GetSection("Paths");
                 if (pathsChild.Exists())
                 {
-                    // Complex format with Paths and optionally ContentSignal
-                    var allowRule = new AllowRule
-                    {
-                        Paths = pathsChild.Get<string[]>()
-                    };
-
-                    var contentSignalChild = child.GetSection("ContentSignal");
-                    if (contentSignalChild.Exists())
-                    {
-                        allowRule.ContentSignal = new ContentSignalConfig
-                        {
-                            AiTrain = contentSignalChild.GetValue<bool?>("AiTrain"),
-                            Search = contentSignalChild.GetValue<bool?>("Search"),
-                            AiInput = contentSignalChild.GetValue<bool?>("AiInput")
-                        };
-                    }
-
-                    var crawlDelay = child.GetValue<int?>("CrawlDelay");
-                    if (crawlDelay.HasValue)
-                    {
-                        allowRule.CrawlDelay = crawlDelay;
-                    }
-
+                    // Complex single format with Paths and optionally ContentSignal
+                    var allowRule = ParseAllowRule(child);
                     result[userAgent] = allowRule;
                 }
                 else
                 {
-                    // Simple array format
-                    var paths = child.Get<string[]>();
-                    if (paths != null)
+                    // Check if this is an array of complex objects (array elements have "Paths")
+                    var childElements = child.GetChildren().ToList();
+                    if (childElements.Any() && childElements.All(c => c.GetSection("Paths").Exists()))
                     {
-                        result[userAgent] = paths;
+                        // Complex multiple format - array of AllowRule objects
+                        var allowRules = childElements.Select(ParseAllowRule).ToArray();
+                        result[userAgent] = allowRules;
+                    }
+                    else
+                    {
+                        // Simple array format - array of path strings
+                        var paths = child.Get<string[]>();
+                        if (paths != null)
+                        {
+                            result[userAgent] = paths;
+                        }
                     }
                 }
             }
 
             return result;
+        }
+
+        private static AllowRule ParseAllowRule(IConfigurationSection section)
+        {
+            var allowRule = new AllowRule
+            {
+                Paths = section.GetSection("Paths").Get<string[]>()
+            };
+
+            var contentSignalChild = section.GetSection("ContentSignal");
+            if (contentSignalChild.Exists())
+            {
+                allowRule.ContentSignal = new ContentSignalConfig
+                {
+                    AiTrain = contentSignalChild.GetValue<bool?>("AiTrain"),
+                    Search = contentSignalChild.GetValue<bool?>("Search"),
+                    AiInput = contentSignalChild.GetValue<bool?>("AiInput")
+                };
+            }
+
+            var crawlDelay = section.GetValue<int?>("CrawlDelay");
+            if (crawlDelay.HasValue)
+            {
+                allowRule.CrawlDelay = crawlDelay;
+            }
+
+            return allowRule;
         }
     }
 }

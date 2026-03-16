@@ -137,11 +137,16 @@ Content Signals ([contentsignals.org](https://contentsignals.org/)) are Cloudfla
 - **search**: Building search indexes and providing search results
 - **ai-input**: Inputting content into AI models (RAG, grounding, generative AI search)
 
-**Important:** A Content-Signal directive is declared once per User-agent section and applies to **all Allow directives** for that user-agent. Multiple paths in an Allow rule will all inherit the same Content-Signal.
-
 ### How Content Signals Work
 
-Content Signals declare permissions at the **User-agent level**. When you have multiple Allow paths for a user-agent, they all share the same Content-Signal:
+Content Signals can be configured at two levels:
+
+1. **User-agent level** (default): A single Content-Signal applies to all Allow paths for that user-agent
+2. **Path-specific level** (advanced): Different Content-Signals for different paths under the same user-agent
+
+#### User-Agent Level Content Signal
+
+When you configure a single ContentSignal for a user-agent, it applies to all Allow paths:
 
 ```json
 "Allow": {
@@ -159,12 +164,51 @@ Content Signals declare permissions at the **User-agent level**. When you have m
 This generates:
 ```
 User-agent: googlebot
-Content-Signal: ai-train=no, search=yes, ai-input=no
+Content-Signal: /blog ai-train=no, search=yes, ai-input=no
 Allow: /blog
 Allow: /news
 ```
 
-Both `/blog` and `/news` paths are covered by the single Content-Signal directive.
+Both `/blog` and `/news` paths share the same Content-Signal (the path shown is the first from the Paths array).
+
+#### Path-Specific Content Signals
+
+For advanced scenarios, you can configure different Content-Signals for different paths under the same user-agent using an array of rules:
+
+```json
+"Allow": {
+  "bingbot": [
+    {
+      "Paths": ["/blog", "/news"],
+      "ContentSignal": {
+        "AiTrain": true,
+        "Search": true,
+        "AiInput": false
+      }
+    },
+    {
+      "Paths": ["/"],
+      "ContentSignal": {
+        "AiTrain": false,
+        "Search": true,
+        "AiInput": false
+      }
+    }
+  ]
+}
+```
+
+This generates:
+```
+User-agent: bingbot
+Content-Signal: /blog ai-train=yes, search=yes, ai-input=no
+Allow: /blog
+Allow: /news
+Content-Signal: / ai-train=no, search=yes, ai-input=no
+Allow: /
+```
+
+This allows you to permit AI training on your blog content while restricting it for other areas of your site.
 
 ### Content Signal Instructions Header
 

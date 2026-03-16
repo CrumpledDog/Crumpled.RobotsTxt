@@ -156,7 +156,7 @@ public class RobotsTxtTests : IClassFixture<UmbracoWebApplicationFactory>
 
         // Assert - googlebot should have path-specific rules with Content-Signal
         Assert.Contains("User-agent: googlebot", content);
-        Assert.Contains("Content-Signal: ai-train=no, search=yes, ai-input=no", content);
+        Assert.Contains("Content-Signal: /blog ai-train=no, search=yes, ai-input=no", content);
         Assert.Contains("Allow: /blog", content);
         Assert.Contains("Allow: /news", content);
     }
@@ -226,14 +226,60 @@ public class RobotsTxtTests : IClassFixture<UmbracoWebApplicationFactory>
             googlebotSection = googlebotSection.Substring(0, nextUserAgentIndex);
         }
 
-        // Verify Crawl-delay appears after Content-Signal but before Allow
+        // Verify Crawl-delay appears before path-specific Content-Signal and Allow
         Assert.Contains("Crawl-delay: 2", googlebotSection);
 
         var crawlDelayIndex = googlebotSection.IndexOf("Crawl-delay:", StringComparison.Ordinal);
         var contentSignalIndex = googlebotSection.IndexOf("Content-Signal:", StringComparison.Ordinal);
         var allowIndex = googlebotSection.IndexOf("Allow:", StringComparison.Ordinal);
 
-        Assert.True(contentSignalIndex < crawlDelayIndex, "Content-Signal should appear before Crawl-delay");
-        Assert.True(crawlDelayIndex < allowIndex, "Crawl-delay should appear before Allow");
+        Assert.True(crawlDelayIndex < contentSignalIndex, "Crawl-delay should appear before path-specific Content-Signal");
+        Assert.True(contentSignalIndex < allowIndex, "Path-specific Content-Signal should appear before Allow");
+    }
+
+    [Fact]
+    public async Task RobotsTxt_ProductionSite_SupportsPathSpecificContentSignals()
+    {
+        // Arrange
+        _client.DefaultRequestHeaders.Host = "localhost:44390";
+
+        // Act
+        var response = await _client.GetAsync("/robots.txt");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Normalize line endings for cross-platform compatibility
+        content = content.Replace("\r\n", "\n");
+
+        // Assert - bingbot should have multiple Content-Signal directives with paths
+        Assert.Contains("User-agent: bingbot", content);
+
+        // Extract bingbot section
+        var bingbotIndex = content.IndexOf("User-agent: bingbot", StringComparison.Ordinal);
+        var bingbotSection = content.Substring(bingbotIndex);
+        var nextUserAgentIndex = bingbotSection.IndexOf("\nUser-agent:", 1, StringComparison.Ordinal);
+        if (nextUserAgentIndex > 0)
+        {
+            bingbotSection = bingbotSection.Substring(0, nextUserAgentIndex);
+        }
+
+        // Verify we have two Content-Signal directives with paths
+        Assert.Contains("Content-Signal: /blog ai-train=yes", bingbotSection);
+        Assert.Contains("Content-Signal: / ai-train=no", bingbotSection);
+
+        // Verify each Content-Signal is followed by corresponding Allow directives
+        var blogContentSignalIndex = bingbotSection.IndexOf("Content-Signal: /blog", StringComparison.Ordinal);
+        var blogAllowIndex = bingbotSection.IndexOf("Allow: /blog", StringComparison.Ordinal);
+        var newsAllowIndex = bingbotSection.IndexOf("Allow: /news", StringComparison.Ordinal);
+        var rootContentSignalIndex = bingbotSection.IndexOf("Content-Signal: / ai-train=no", StringComparison.Ordinal);
+        var rootAllowLines = bingbotSection.Split('\n').Where(l => l.Trim() == "Allow: /").ToList();
+        Assert.Single(rootAllowLines); // Should have exactly one "Allow: /" directive
+
+        var rootAllowIndex = bingbotSection.LastIndexOf("Allow: /", StringComparison.Ordinal);
+
+        // Verify ordering: Content-Signal for /blog, then Allow /blog and /news, then Content-Signal for /, then Allow /
+        Assert.True(blogContentSignalIndex < blogAllowIndex, "Content-Signal /blog should appear before Allow /blog");
+        Assert.True(blogAllowIndex < newsAllowIndex, "Allow /blog should appear before Allow /news");
+        Assert.True(newsAllowIndex < rootContentSignalIndex, "Allow /news should appear before Content-Signal /");
+        Assert.True(rootContentSignalIndex < rootAllowIndex, "Content-Signal / should appear before Allow /");
     }
 }
