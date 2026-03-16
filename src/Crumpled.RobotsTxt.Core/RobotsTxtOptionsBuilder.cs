@@ -138,12 +138,6 @@ public class RobotsTxtOptionsBuilder
             _settings = new ContentSignalSettings();
         }
 
-        public ContentSignalBuilder ForPath(string path)
-        {
-            _settings.Path = path;
-            return this;
-        }
-
         public ContentSignalBuilder AllowAiTrain(bool allow = true)
         {
             _settings.AiTrain = allow;

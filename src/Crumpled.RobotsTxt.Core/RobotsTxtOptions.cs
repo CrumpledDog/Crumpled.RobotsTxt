@@ -158,7 +158,6 @@ public class RobotsTxtCrawlCustomRule : RobotsTxtRule
 
 public class ContentSignalSettings
 {
-    public string? Path { get; set; }
     public bool? AiTrain { get; set; }
     public bool? Search { get; set; }
     public bool? AiInput { get; set; }
@@ -178,14 +177,7 @@ public class ContentSignalSettings
 
         if (signals.Count > 0)
         {
-            builder.Append("Content-Signal:");
-
-            if (!string.IsNullOrWhiteSpace(Path))
-            {
-                builder.Append($" path=\"{Path}\"");
-            }
-
-            builder.Append(' ').AppendLine(string.Join(", ", signals));
+            builder.Append("Content-Signal: ").AppendLine(string.Join(", ", signals));
         }
     }
 }

@@ -207,8 +207,7 @@ internal class DynamicRobotsTxtProvider(
 
         if (signals.Any())
         {
-            var path = !string.IsNullOrWhiteSpace(contentSignal.Path) ? $" path=\"{contentSignal.Path}\"" : "";
-            builder.AppendLine($"Content-Signal:{path} {string.Join(", ", signals)}");
+            builder.AppendLine($"Content-Signal: {string.Join(", ", signals)}");
         }
     }
 

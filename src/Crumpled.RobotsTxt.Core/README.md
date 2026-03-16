@@ -67,23 +67,6 @@ services.AddStaticRobotsTxt(builder =>
 );
 ```
 
-Path-specific content signals:
-
-```csharp
-services.AddStaticRobotsTxt(builder =>
-    builder
-        .AddSection(section =>
-            section
-                .AddUserAgent("*")
-                .WithContentSignal(cs => cs
-                    .ForPath("/blog/")
-                    .AllowSearch(true)
-                    .AllowAiTrain(false))
-                .Allow("/blog/")
-        )
-);
-```
-
 Convenience methods:
 - `DisallowAll()` - Block all AI actions
 - `AllowSearchOnly()` - Allow search indexing only

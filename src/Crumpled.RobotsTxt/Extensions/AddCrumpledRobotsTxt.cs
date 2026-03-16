@@ -80,7 +80,6 @@ namespace Crumpled.RobotsTxt
                     {
                         allowRule.ContentSignal = new ContentSignalConfig
                         {
-                            Path = contentSignalChild.GetValue<string?>("Path"),
                             AiTrain = contentSignalChild.GetValue<bool?>("AiTrain"),
                             Search = contentSignalChild.GetValue<bool?>("Search"),
                             AiInput = contentSignalChild.GetValue<bool?>("AiInput")
