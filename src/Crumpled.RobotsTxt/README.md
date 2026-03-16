@@ -131,7 +131,7 @@ Configure different robots.txt rules for different environments and domains usin
 
 ## Content Signals Support
 
-Content Signals ([contentsignals.org](https://contentsignals.org/)) is Cloudflare's implementation for controlling how automated systems (AI crawlers, search engines) use your content. **Content-Signal directives are restrictions on Allow rules only** and declare permissions for:
+Content Signals ([contentsignals.org](https://contentsignals.org/)) are Cloudflare's implementation for controlling how automated systems (AI crawlers, search engines) use your content. **Content-Signal directives are restrictions on Allow rules only** and declare permissions for:
 
 - **ai-train**: Training or fine-tuning AI models
 - **search**: Building search indexes and providing search results
@@ -141,7 +141,7 @@ Content Signals ([contentsignals.org](https://contentsignals.org/)) is Cloudflar
 
 ### How Content Signals Work
 
-Content Signals are declare permissions at the **User-agent level**. When you have multiple Allow paths for a user-agent, they all share the same Content-Signal:
+Content Signals declare permissions at the **User-agent level**. When you have multiple Allow paths for a user-agent, they all share the same Content-Signal:
 
 ```json
 "Allow": {

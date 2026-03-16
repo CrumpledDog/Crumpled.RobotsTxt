@@ -9,6 +9,7 @@ namespace Crumpled.RobotsTxt
         public string? DefaultRuleset { get; set; }
         public Dictionary<string, RuleSet>? RuleSets { get; set; }
         public Dictionary<string, SiteItem>? Sites { get; set; } = null;
+        public TimeSpan MaxAge { get; set; } = TimeSpan.FromDays(1);
     }
 
     public class RuleSet
