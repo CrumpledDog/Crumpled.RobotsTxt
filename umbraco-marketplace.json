@@ -2,11 +2,15 @@
   "$schema": "https://marketplace.umbraco.com/umbraco-marketplace-schema.json",
   "Title":  "Crumpled RobotsTxt" ,
   "AuthorDetails": {
-    "Name": "Jeavon Leopold",
-    "Description": "Umbraco MVP, CMS and documentation contributor",
-    "Url": "https://github.com/Jeavon",
-    "ImageUrl": "https://github.com/jeavon.png",
+    "Name": "Crumpled Dog",
+    "Description": "Umbraco consultants and developers specialising in Cloudflare, Azure, LLMs, AI, and Agents",
+    "Url": "https://github.com/CrumpledDog",
+    "ImageUrl": "https://github.com/crumpleddog.png",
     "Contributors": [
+      {
+        "Name": "Jeavon Leopold",
+        "Url": "https://github.com/Jeavon"
+      },
       {
         "Name": "Marc Goodson",
         "Url": "https://github.com/marcemarc"
@@ -18,9 +22,10 @@
     ]
   },
   "Category": "Developer Tools",
+  "AlternateCategory": "Artificial Intelligence",
   "IssueTrackerUrl": "https://github.com/CrumpledDog/Crumpled.RobotsTxt/issues",
   "LicenseTypes": [ "Free" ],
   "PackageType": "Package",
-  "Tags": [ "Robots.txt", "Robots", "Umbraco Cloud" ],
+  "Tags": [ "Robots.txt", "Robots", "Umbraco Cloud", "Cloudflare", "Content Signals" ],
   "VersionDependencyMode": "SemVer"
 }

@@ -15,8 +15,16 @@ if [ -z "$SEMVER" ]; then
   exit 1
 fi
 
-# Extract version from release branch (e.g., release/v1 -> v1)
-VERSION_SUFFIX=$(echo "${GITHUB_REF#refs/heads/release/}")
+# Extract version from release or beta branch (e.g., release/v1 -> v1, beta/v1 -> v1)
+if [[ "$GITHUB_REF" == refs/heads/release/* ]]; then
+  VERSION_SUFFIX=$(echo "${GITHUB_REF#refs/heads/release/}")
+elif [[ "$GITHUB_REF" == refs/heads/beta/* ]]; then
+  VERSION_SUFFIX=$(echo "${GITHUB_REF#refs/heads/beta/}")
+else
+  echo "Error: Unsupported branch type: $GITHUB_REF"
+  exit 1
+fi
+
 DEVELOP_BRANCH="develop/$VERSION_SUFFIX"
 
 echo "Merging ${GITHUB_REF#refs/heads/} into $DEVELOP_BRANCH after release $SEMVER"
