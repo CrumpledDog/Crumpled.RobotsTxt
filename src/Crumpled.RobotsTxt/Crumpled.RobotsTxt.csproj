@@ -23,7 +23,7 @@
 		<Product>Crumpled.RobotsTxt</Product>
 		<Title>Crumpled RobotsTxt</Title>
 		<Description>A flexible, configuration-driven robots.txt solution for Umbraco v13, v14, v15, v16 and v17 that protects your non-production environments from search engine indexing by default. Supports multi-site configurations, environment-aware rules, and flexible user-agent patterns with zero code setup.</Description>
-		<PackageTags>umbraco plugin package umbraco-marketplace robots.txt robots</PackageTags>
+		<PackageTags>umbraco plugin package umbraco-marketplace robots.txt robots content signals cloudflare ai</PackageTags>
 		<Company>Crumpled Dog and Umbraco Community</Company>
 		<PackageIcon>crumpled-robots-txt.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
