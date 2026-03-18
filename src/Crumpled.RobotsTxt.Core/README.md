@@ -35,6 +35,8 @@ app.UseRobotsTxt();
 
 ### Content Signals Support
 
+> **Available in v3.1.0+ (currently in beta)**
+
 Add Content Signals ([contentsignals.org](https://contentsignals.org/)) to control AI training and content usage:
 
 ```csharp
