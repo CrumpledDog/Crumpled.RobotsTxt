@@ -140,6 +140,8 @@ jobs:
     
     - name: Generate Release Notes Body
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         # Check if publishing to nuget.org (for stable or beta releases)
         if [[ "${{ github.event.inputs.publish_to_nuget }}" == "true" && ("${{ needs.setup.outputs.semver }}" != *"-"* || "${{ needs.setup.outputs.semver }}" == *"-beta."*) ]]; then
@@ -150,6 +152,24 @@ jobs:
         dotnet add package Crumpled.RobotsTxt --version ${{ needs.setup.outputs.semver }}
         ```
         EOF
+          
+          # Find the previous nuget.org release by looking for releases without "GitHub Packages" in body
+          echo "" >> release_body.md
+          echo "---" >> release_body.md
+          echo "" >> release_body.md
+          
+          # Get the last release that was published to nuget.org
+          LAST_NUGET_TAG=$(gh release list --limit 100 --json tagName,body --jq '.[] | select(.body | contains("## Installation") and (contains("```bash\ndotnet add package Crumpled.RobotsTxt --version") and (contains("GitHub Packages") | not))) | .tagName' | head -n1)
+          
+          if [[ -n "$LAST_NUGET_TAG" ]]; then
+            echo "## What's Changed (since $LAST_NUGET_TAG)" >> release_body.md
+            echo "" >> release_body.md
+            gh api repos/${{ github.repository }}/releases/generate-notes -F tag_name="v${{ needs.setup.outputs.semver }}" -F previous_tag_name="$LAST_NUGET_TAG" --jq .body >> release_body.md
+          else
+            echo "## What's Changed" >> release_body.md
+            echo "" >> release_body.md
+            gh api repos/${{ github.repository }}/releases/generate-notes -F tag_name="v${{ needs.setup.outputs.semver }}" --jq .body >> release_body.md
+          fi
         else
           # Not publishing to nuget.org - show alternative sources
           echo "## Installation" > release_body.md
@@ -181,7 +201,7 @@ jobs:
       with:
         tag_name: v${{ needs.setup.outputs.semver }}
         name: v${{ needs.setup.outputs.semver }}
-        generate_release_notes: true
+        generate_release_notes: ${{ github.event.inputs.publish_to_nuget != 'true' }}
         prerelease: ${{ contains(needs.setup.outputs.semver, '-') }}
         body_path: release_body.md
     
