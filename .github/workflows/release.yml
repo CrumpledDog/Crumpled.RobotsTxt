@@ -138,6 +138,43 @@ jobs:
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
       run: dotnet validate package local ${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.nupkg
     
+    - name: Generate Release Notes Body
+      if: ${{ needs.setup.outputs.new_release_published == 'true' }}
+      run: |
+        # Check if publishing to nuget.org (for stable or beta releases)
+        if [[ "${{ github.event.inputs.publish_to_nuget }}" == "true" && ("${{ needs.setup.outputs.semver }}" != *"-"* || "${{ needs.setup.outputs.semver }}" == *"-beta."*) ]]; then
+          cat << 'EOF' > release_body.md
+        ## Installation
+        
+        ```bash
+        dotnet add package Crumpled.RobotsTxt --version ${{ needs.setup.outputs.semver }}
+        ```
+        EOF
+        else
+          # Not publishing to nuget.org - show alternative sources
+          echo "## Installation" > release_body.md
+          echo "" >> release_body.md
+          
+          if [[ -n "${{ env.MYGET_API_KEY }}" ]]; then
+            cat << 'EOF' >> release_body.md
+        ### From MyGet (pre-release)
+        
+        ```bash
+        dotnet add package Crumpled.RobotsTxt --version ${{ needs.setup.outputs.semver }} --source https://www.myget.org/F/umbraco-packages/api/v3/index.json
+        ```
+        
+        EOF
+          fi
+          
+          cat << 'EOF' >> release_body.md
+        ### From GitHub Packages (pre-release)
+        
+        ```bash
+        dotnet add package Crumpled.RobotsTxt --version ${{ needs.setup.outputs.semver }} --source https://nuget.pkg.github.com/CrumpledDog/index.json
+        ```
+        EOF
+        fi
+    
     - name: Create GitHub Release
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
       uses: softprops/action-gh-release@v2
@@ -146,18 +183,13 @@ jobs:
         name: v${{ needs.setup.outputs.semver }}
         generate_release_notes: true
         prerelease: ${{ contains(needs.setup.outputs.semver, '-') }}
-        body: |
-          ## Installation
-          
-          ```bash
-          ${{ contains(needs.setup.outputs.semver, '-') && format('dotnet add package Crumpled.RobotsTxt --version {0} --source https://nuget.pkg.github.com/CrumpledDog/index.json', needs.setup.outputs.semver) || format('dotnet add package Crumpled.RobotsTxt --version {0}', needs.setup.outputs.semver) }}
-          ```
+        body_path: release_body.md
     
     - name: Add GitHub Packages Source
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
       run: dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/CrumpledDog/index.json"
 
-    - name: Push NuGet Package
+    - name: Push GitHub NuGet Package
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
       run: dotnet nuget push "${{ env.PATH_TO_EXTENSION }}/bin/Release/Crumpled.RobotsTxt.*.nupkg"  --api-key ${{ secrets.GITHUB_TOKEN }} --source "github" --skip-duplicate
 
