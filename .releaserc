@@ -8,14 +8,6 @@
     {
       "name": "develop/v3",
       "prerelease": "alpha"
-    },
-    {
-      "name": "feature/v3/**",
-      "prerelease": "feature.alpha"
-    },
-    {
-      "name": "hotfix/v3/**",
-      "prerelease": "hotfix.alpha"
     }
   ],
   "tagFormat": "v${version}",
