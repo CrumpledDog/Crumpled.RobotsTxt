@@ -308,7 +308,7 @@ public class RobotsTxtTests : IClassFixture<UmbracoWebApplicationFactory>
         Assert.True(wildcardIndex >= 0, "Should contain User-agent: *");
 
         var wildcardSection = content.Substring(wildcardIndex);
-        
+
         // Count occurrences of "Disallow: /" in the wildcard section
         var disallowCount = 0;
         var index = 0;
