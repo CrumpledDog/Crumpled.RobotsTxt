@@ -285,4 +285,40 @@ public class RobotsTxtTests : IClassFixture<UmbracoWebApplicationFactory>
         Assert.True(newsAllowIndex < rootContentSignalIndex, "Allow /news should appear before Content-Signal (root)");
         Assert.True(rootContentSignalIndex < rootAllowIndex, "Content-Signal (root) should appear before Allow /");
     }
+
+    [Fact]
+    public async Task RobotsTxt_DuplicateDisallowPaths_AreDeduplicatedInOutput()
+    {
+        // Arrange - test site with duplicate "/" in Disallow array
+        _client.DefaultRequestHeaders.Host = "localhost:44391";
+
+        // Act
+        var response = await _client.GetAsync("/robots.txt");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Normalize line endings for cross-platform compatibility
+        content = content.Replace("\r\n", "\n");
+
+        // Assert
+        Assert.Contains("User-agent: PowerMapper", content);
+        Assert.Contains("User-agent: *", content);
+
+        // Extract wildcard section
+        var wildcardIndex = content.IndexOf("User-agent: *", StringComparison.Ordinal);
+        Assert.True(wildcardIndex >= 0, "Should contain User-agent: *");
+
+        var wildcardSection = content.Substring(wildcardIndex);
+        
+        // Count occurrences of "Disallow: /" in the wildcard section
+        var disallowCount = 0;
+        var index = 0;
+        while ((index = wildcardSection.IndexOf("Disallow: /\n", index, StringComparison.Ordinal)) >= 0)
+        {
+            disallowCount++;
+            index += "Disallow: /\n".Length;
+        }
+
+        // Should only appear once, even though the configuration has it twice
+        Assert.Equal(1, disallowCount);
+    }
 }

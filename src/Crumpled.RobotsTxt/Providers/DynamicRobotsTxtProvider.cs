@@ -172,7 +172,7 @@ internal class DynamicRobotsTxtProvider(
             // Add Disallow rules first (convention: Disallow before Allow)
             if (ruleSet.Disallow != null && ruleSet.Disallow.TryGetValue(userAgent, out var disallowPaths))
             {
-                foreach (var path in disallowPaths)
+                foreach (var path in disallowPaths.Distinct())
                 {
                     builder.AppendLine($"Disallow: {path}");
                 }

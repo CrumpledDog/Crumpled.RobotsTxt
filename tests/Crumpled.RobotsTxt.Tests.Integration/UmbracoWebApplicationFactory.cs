@@ -56,6 +56,13 @@ public class UmbracoWebApplicationFactory : WebApplicationFactory<Program>
                 // Suppress Serilog Fatal logs from shutdown
                 ["Serilog:MinimumLevel:Override:Microsoft.Extensions.Hosting"] = "6",
                 ["Serilog:MinimumLevel:Override:Microsoft.Hosting.Lifetime"] = "6",
+
+                // Add test configuration for duplicate disallow paths
+                ["Crumpled:RobotsTxt:RuleSets:DuplicateTest:Allow:PowerMapper:0"] = "/",
+                ["Crumpled:RobotsTxt:RuleSets:DuplicateTest:Disallow:*:0"] = "/",
+                ["Crumpled:RobotsTxt:RuleSets:DuplicateTest:Disallow:*:1"] = "/",
+                ["Crumpled:RobotsTxt:Sites:DuplicateTest:HostNames"] = "localhost:44391",
+                ["Crumpled:RobotsTxt:Sites:DuplicateTest:RuleSet"] = "DuplicateTest",
             };
 
             config.AddInMemoryCollection(testConfig!);
