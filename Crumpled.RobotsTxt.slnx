@@ -8,7 +8,9 @@
   </Folder>
   <Project Path="src/Crumpled.RobotsTxt.TestSite/Crumpled.RobotsTxt.TestSite.csproj" />
   <Project Path="src/Crumpled.RobotsTxt.TestSite13/Crumpled.RobotsTxt.TestSite13.csproj" />
+  <Project Path="src/Crumpled.RobotsTxt.TestSite18/Crumpled.RobotsTxt.TestSite18.csproj" />
   <Project Path="src/Crumpled.RobotsTxt/Crumpled.RobotsTxt.csproj" />
   <Project Path="src/Crumpled.RobotsTxt.Core/Crumpled.RobotsTxt.Core.csproj" />
   <Project Path="tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj" />
+  <Project Path="tests/Crumpled.RobotsTxt.Tests.Integration.V18/Crumpled.RobotsTxt.Tests.Integration.V18.csproj" />
 </Solution>

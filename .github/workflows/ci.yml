@@ -137,6 +137,7 @@ jobs:
       run: |
         dotnet test tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj --configuration Release --framework net8.0 --no-build --logger "trx;LogFileName=test-results-net8.0.trx" --logger "GitHubActions" --logger "console;verbosity=normal"
         dotnet test tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj --configuration Release --framework net10.0 --no-build --logger "trx;LogFileName=test-results-net10.0.trx" --logger "GitHubActions" --logger "console;verbosity=normal"
+        dotnet test tests/Crumpled.RobotsTxt.Tests.Integration.V18/Crumpled.RobotsTxt.Tests.Integration.V18.csproj --configuration Release --framework net10.0 --no-build --logger "trx;LogFileName=test-results-v18.trx" --logger "GitHubActions" --logger "console;verbosity=normal"
 
     - name: Publish Test Results (Umbraco v13)
       uses: dorny/test-reporter@v3
@@ -153,6 +154,15 @@ jobs:
       with:
         name: Integration Test Results (Umbraco v17)
         path: '**/test-results-net10.0.trx'
+        reporter: dotnet-trx
+        fail-on-error: true
+
+    - name: Publish Test Results (Umbraco v18)
+      uses: dorny/test-reporter@v3
+      if: always()
+      with:
+        name: Integration Test Results (Umbraco v18)
+        path: '**/test-results-v18.trx'
         reporter: dotnet-trx
         fail-on-error: true
 
