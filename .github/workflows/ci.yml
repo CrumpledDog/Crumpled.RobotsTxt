@@ -35,9 +35,14 @@ jobs:
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
           echo "Current branch: $BRANCH_NAME"
           
-          if [[ "$BRANCH_NAME" == feature/v3/* ]] || [[ "$BRANCH_NAME" == hotfix/v3/* ]]; then
+          if [[ "$BRANCH_NAME" == hotfix/* ]] || [[ "$BRANCH_NAME" == feature/* ]]; then
             # Convert branch name to valid semver prerelease identifier
-            PRERELEASE_ID=$(echo "$BRANCH_NAME" | sed 's/\//-/g').alpha
+            # Prefix with "00-" to ensure these versions sort before alpha/beta/rc
+            # Truncate to max 12 chars to keep NuGet paths short
+            # Replace feature->ft and hotfix->hf to save more space
+            # Trim trailing hyphen if present after truncation
+            BRANCH_SLUG=$(echo "$BRANCH_NAME" | sed 's/feature\//ft-/g; s/hotfix\//hf-/g; s/\//-/g' | cut -c 1-12 | sed 's/-$//')
+            PRERELEASE_ID="00-${BRANCH_SLUG}"
             echo "Adding branch config: $BRANCH_NAME with prerelease: $PRERELEASE_ID"
             
             # Read current .releaserc, add the branch entry, and save
@@ -48,7 +53,7 @@ jobs:
             echo "Updated .releaserc:"
             cat .releaserc
           else
-            echo "Branch does not match feature/v3/** or hotfix/v3/**, no update needed"
+            echo "Branch does not match hotfix/* or feature/*, no update needed"
           fi
           
       - name: Semantic Release
