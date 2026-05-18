@@ -7,7 +7,7 @@ A flexible, configuration-driven robots.txt solution for **Umbraco v13, v14, v15
 - **🛡️ Safe by Default** - Blocks all bots by default to prevent accidental indexing of development, staging, or preview environments
 - **🌍 Multi-Site & Environment-Aware** - Configure different robots.txt rules for different domains/hostnames and environments (Production, Development, Staging, etc.)
 - **📝 Flexible Rule Configuration** - Define reusable rulesets with Allow/Disallow patterns for different user agents
-- **🤖 Content Signals Support** - Control AI training and content usage with [Content Signals](https://contentsignals.org/) directives (v3.1.0+, currently in beta)
+- **🤖 Content Signals Support** - Control AI training and content usage with [Content Signals](https://contentsignals.org/) directives (v3.1.0+)
 - **🔄 Hot Reload** - Configuration changes are automatically picked up without requiring an application restart
 - **🗺️ Sitemap Integration** - Include sitemap URLs per site
 - **☁️ Umbraco Cloud Ready** - Default behaviour designed for Umbraco Cloud - Perfect for hiding those often overlooked *.umbraco.io environment domains.
@@ -131,7 +131,7 @@ Configure different robots.txt rules for different environments and domains usin
 
 ## Content Signals Support
 
-> **Available in v3.1.0+ (currently in beta)**
+> **Available in v3.1.0+**
 
 Content Signals ([contentsignals.org](https://contentsignals.org/)) are Cloudflare's implementation for controlling how automated systems (AI crawlers, search engines) use your content. **Content-Signal directives are restrictions on Allow rules only** and declare permissions for:
 

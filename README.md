@@ -28,7 +28,7 @@ dotnet add package Crumpled.RobotsTxt
 - 🛡️ **Safe by Default** - Blocks all bots by default to prevent accidental indexing
 - 🌍 **Multi-Site & Environment-Aware** - Different rules per domain/environment
 - 📝 **Flexible Configuration** - Reusable rulesets via appsettings.json
-- 🤖 **Content Signals Support** - Control AI training and content usage (v3.1.0+, currently in beta)
+- 🤖 **Content Signals Support** - Control AI training and content usage (v3.1.0+)
 - 🗺️ **Sitemap Integration** - Automatic sitemap URL generation
 - ⚙️ **Zero Code Setup** - Auto-registration via Umbraco Composer
 
