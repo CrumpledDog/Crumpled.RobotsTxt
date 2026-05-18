@@ -10,9 +10,9 @@ env:
 
 on:
   push:
-    branches: [ "develop/v3", "release/v3", "feature/v3/**", "hotfix/v3/**" ]
+    branches: [ "develop/v3", "release/v3", "beta/v3", "feature/v3/**", "hotfix/v3/**" ]
   pull_request:
-    branches: [ "develop/v3", "release/v3", "feature/v3/**", "hotfix/v3/**" ]
+    branches: [ "develop/v3", "release/v3", "beta/v3", "feature/v3/**", "hotfix/v3/**" ]
   workflow_dispatch:
 
 jobs:
@@ -29,6 +29,32 @@ jobs:
         
       - name: Fetch all tags
         run: git fetch --force --tags
+
+      - name: Update .releaserc for current branch
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          echo "Current branch: $BRANCH_NAME"
+          
+          if [[ "$BRANCH_NAME" == hotfix/* ]] || [[ "$BRANCH_NAME" == feature/* ]]; then
+            # Convert branch name to valid semver prerelease identifier
+            # Prefix with "00-" to ensure these versions sort before alpha/beta/rc
+            # Truncate to max 12 chars to keep NuGet paths short
+            # Replace feature->ft and hotfix->hf to save more space
+            # Trim trailing hyphen if present after truncation
+            BRANCH_SLUG=$(echo "$BRANCH_NAME" | sed 's/feature\//ft-/g; s/hotfix\//hf-/g; s/\//-/g' | cut -c 1-12 | sed 's/-$//')
+            PRERELEASE_ID="00-${BRANCH_SLUG}"
+            echo "Adding branch config: $BRANCH_NAME with prerelease: $PRERELEASE_ID"
+            
+            # Read current .releaserc, add the branch entry, and save
+            jq --arg name "$BRANCH_NAME" --arg prerelease "$PRERELEASE_ID" \
+              '.branches += [{"name": $name, "prerelease": $prerelease}]' \
+              .releaserc > .releaserc.tmp && mv .releaserc.tmp .releaserc
+            
+            echo "Updated .releaserc:"
+            cat .releaserc
+          else
+            echo "Branch does not match hotfix/* or feature/*, no update needed"
+          fi
           
       - name: Semantic Release
         id: semantic
@@ -111,9 +137,10 @@ jobs:
       run: |
         dotnet test tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj --configuration Release --framework net8.0 --no-build --logger "trx;LogFileName=test-results-net8.0.trx" --logger "GitHubActions" --logger "console;verbosity=normal"
         dotnet test tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj --configuration Release --framework net10.0 --no-build --logger "trx;LogFileName=test-results-net10.0.trx" --logger "GitHubActions" --logger "console;verbosity=normal"
+        dotnet test tests/Crumpled.RobotsTxt.Tests.Integration.V18/Crumpled.RobotsTxt.Tests.Integration.V18.csproj --configuration Release --framework net10.0 --no-build --logger "trx;LogFileName=test-results-v18.trx" --logger "GitHubActions" --logger "console;verbosity=normal"
 
     - name: Publish Test Results (Umbraco v13)
-      uses: dorny/test-reporter@v2
+      uses: dorny/test-reporter@v3
       if: always()
       with:
         name: Integration Test Results (Umbraco v13)
@@ -122,11 +149,20 @@ jobs:
         fail-on-error: true
 
     - name: Publish Test Results (Umbraco v17)
-      uses: dorny/test-reporter@v2
+      uses: dorny/test-reporter@v3
       if: always()
       with:
         name: Integration Test Results (Umbraco v17)
         path: '**/test-results-net10.0.trx'
+        reporter: dotnet-trx
+        fail-on-error: true
+
+    - name: Publish Test Results (Umbraco v18)
+      uses: dorny/test-reporter@v3
+      if: always()
+      with:
+        name: Integration Test Results (Umbraco v18)
+        path: '**/test-results-v18.trx'
         reporter: dotnet-trx
         fail-on-error: true
 

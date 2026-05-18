@@ -24,6 +24,7 @@ namespace Crumpled.RobotsTxt
     {
         public string[]? Paths { get; set; }
         public ContentSignalConfig? ContentSignal { get; set; }
+        public int? CrawlDelay { get; set; }
     }
 
     public class SiteItem
@@ -35,7 +36,6 @@ namespace Crumpled.RobotsTxt
 
     public class ContentSignalConfig
     {
-        public string? Path { get; set; }
         public bool? AiTrain { get; set; }
         public bool? Search { get; set; }
         public bool? AiInput { get; set; }

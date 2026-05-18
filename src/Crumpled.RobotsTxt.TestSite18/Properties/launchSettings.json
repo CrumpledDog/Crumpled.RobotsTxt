@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "Crumpled.RobotsTxt.TestSite18": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:44394;https://localhost:44395;https://localhost:44396",
+      "launchUrl": "https://localhost:44394/robots.txt",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "Crumpled.RobotsTxt.TestSite18LiveCloud": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:44397",
+      "launchUrl": "https://localhost:44392/robots.txt",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "CloudTest",
+        "UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME": "live"
+      }
+    },
+    "Crumpled.RobotsTxt.TestSite18DevCloud": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:44398",
+      "launchUrl": "https://localhost:44393/robots.txt",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "CloudTest",
+        "UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME": "development"
+      }
+    }    
+  }
+}
+

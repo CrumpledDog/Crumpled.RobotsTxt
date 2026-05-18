@@ -1,79 +1,79 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
-	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
-		<Nullable>enable</Nullable>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-		<StaticWebAssetBasePath>App_Plugins/Crumpled.RobotsTxt</StaticWebAssetBasePath>
-		<EnableDefaultContentItems>false</EnableDefaultContentItems>
-		<NoWarn>$(NoWarn);NU5118</NoWarn>
-		<!-- Symbol file configuration -->
-		<DebugType>portable</DebugType>
-		<IncludeSymbols>true</IncludeSymbols>
-		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-		<!-- Enable deterministic builds in CI -->
-		<ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
-		<!-- SourceLink configuration -->
-		<PublishRepositoryUrl>true</PublishRepositoryUrl>
-		<EmbedUntrackedSources>true</EmbedUntrackedSources>
-	</PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <StaticWebAssetBasePath>App_Plugins/Crumpled.RobotsTxt</StaticWebAssetBasePath>
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
+    <NoWarn>$(NoWarn);NU5118</NoWarn>
+    <!-- Symbol file configuration -->
+    <DebugType>portable</DebugType>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <!-- Enable deterministic builds in CI -->
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+    <!-- SourceLink configuration -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+  </PropertyGroup>
 
-	<PropertyGroup>
-		<PackageId>Crumpled.RobotsTxt</PackageId>
-		<Product>Crumpled.RobotsTxt</Product>
-		<Title>Crumpled RobotsTxt</Title>
-		<Description>A flexible, configuration-driven robots.txt solution for Umbraco v13, v14, v15, v16 and v17 that protects your non-production environments from search engine indexing by default. Supports multi-site configurations, environment-aware rules, and flexible user-agent patterns with zero code setup.</Description>
-		<PackageTags>umbraco plugin package umbraco-marketplace robots.txt robots</PackageTags>
-		<Company>Crumpled Dog and Umbraco Community</Company>
-		<PackageIcon>crumpled-robots-txt.png</PackageIcon>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageLicenseFile>LICENSE</PackageLicenseFile>
-		<Authors>Crumpled Dog and Umbraco Community</Authors>
-		<RepositoryUrl>https://github.com/CrumpledDog/Crumpled.RobotsTxt</RepositoryUrl>
-		<PackageProjectUrl>https://github.com/CrumpledDog/Crumpled.RobotsTxt</PackageProjectUrl>
-		<InformationalVersion>$(PackageVersion)</InformationalVersion>
-	</PropertyGroup>
+  <PropertyGroup>
+    <PackageId>Crumpled.RobotsTxt</PackageId>
+    <Product>Crumpled.RobotsTxt</Product>
+    <Title>Crumpled RobotsTxt</Title>
+    <Description>A flexible, configuration-driven robots.txt solution for Umbraco v13, v14, v15, v16 and v17 that protects your non-production environments from search engine indexing by default. Supports multi-site configurations, environment-aware rules, and flexible user-agent patterns with zero code setup.</Description>
+    <PackageTags>umbraco plugin package umbraco-marketplace robots.txt robots content signals cloudflare ai</PackageTags>
+    <Company>Crumpled Dog and Umbraco Community</Company>
+    <PackageIcon>crumpled-robots-txt.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <Authors>Crumpled Dog and Umbraco Community</Authors>
+    <RepositoryUrl>https://github.com/CrumpledDog/Crumpled.RobotsTxt</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/CrumpledDog/Crumpled.RobotsTxt</PackageProjectUrl>
+    <InformationalVersion>$(PackageVersion)</InformationalVersion>
+  </PropertyGroup>
 
-	<ItemGroup>
-		<FrameworkReference Include="Microsoft.AspNetCore.App" />
-	</ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.103" PrivateAssets="All" />
-		<PackageReference Include="Umbraco.Cms.Web.Website" Version="13.0.0" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.103" PrivateAssets="All" />
+    <PackageReference Include="Umbraco.Cms.Web.Website" Version="13.0.0" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\Crumpled.RobotsTxt.Core\Crumpled.RobotsTxt.Core.csproj" PrivateAssets="All" />
-	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Crumpled.RobotsTxt.Core\Crumpled.RobotsTxt.Core.csproj" PrivateAssets="All" />
+  </ItemGroup>
 
-	<!-- Include Core library DLL and PDB in the NuGet package -->
-	<Target Name="IncludeCoreLibraryInPackage" BeforeTargets="_GetPackageFiles" DependsOnTargets="BuildOnlySettings;ResolveReferences">
-		<ItemGroup>
-			<None Include="$(OutputPath)Crumpled.RobotsTxt.Core.dll" Pack="true" PackagePath="lib\$(TargetFramework)" Visible="false" />
-			<_TargetPathsToSymbols Include="$(OutputPath)Crumpled.RobotsTxt.Core.pdb" TargetFramework="$(TargetFramework)" IsSymbolPackageItem="true" />
-		</ItemGroup>
-	</Target>
+  <!-- Include Core library DLL and PDB in the NuGet package -->
+  <Target Name="IncludeCoreLibraryInPackage" BeforeTargets="_GetPackageFiles" DependsOnTargets="BuildOnlySettings;ResolveReferences">
+    <ItemGroup>
+      <None Include="$(OutputPath)Crumpled.RobotsTxt.Core.dll" Pack="true" PackagePath="lib\$(TargetFramework)" Visible="false" />
+      <_TargetPathsToSymbols Include="$(OutputPath)Crumpled.RobotsTxt.Core.pdb" TargetFramework="$(TargetFramework)" IsSymbolPackageItem="true" />
+    </ItemGroup>
+  </Target>
 
-	<ItemGroup>
-		<Content Include="buildTransitive\**" PackagePath="buildTransitive" />
-		<Content Include="appsettings-schema.Crumpled.RobotsTxt.json" PackagePath="" />
-		<Content Include="wwwroot\**" />
-	</ItemGroup>
+  <ItemGroup>
+    <Content Include="buildTransitive\**" PackagePath="buildTransitive" />
+    <Content Include="appsettings-schema.Crumpled.RobotsTxt.json" PackagePath="" />
+    <Content Include="wwwroot\**" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<None Update="crumpled-robots-txt.png">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-		<None Update="README.md">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-		<None Include="..\..\LICENSE">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-	</ItemGroup>
+  <ItemGroup>
+    <None Update="crumpled-robots-txt.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Update="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
 </Project>

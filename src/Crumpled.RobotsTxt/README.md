@@ -7,7 +7,7 @@ A flexible, configuration-driven robots.txt solution for **Umbraco v13, v14, v15
 - **🛡️ Safe by Default** - Blocks all bots by default to prevent accidental indexing of development, staging, or preview environments
 - **🌍 Multi-Site & Environment-Aware** - Configure different robots.txt rules for different domains/hostnames and environments (Production, Development, Staging, etc.)
 - **📝 Flexible Rule Configuration** - Define reusable rulesets with Allow/Disallow patterns for different user agents
-- **🤖 Content Signals Support** - Control AI training and content usage with [Content Signals](https://contentsignals.org/) directives
+- **🤖 Content Signals Support** - Control AI training and content usage with [Content Signals](https://contentsignals.org/) directives (v3.1.0+, currently in beta)
 - **🔄 Hot Reload** - Configuration changes are automatically picked up without requiring an application restart
 - **🗺️ Sitemap Integration** - Include sitemap URLs per site
 - **☁️ Umbraco Cloud Ready** - Default behaviour designed for Umbraco Cloud - Perfect for hiding those often overlooked *.umbraco.io environment domains.
@@ -131,17 +131,24 @@ Configure different robots.txt rules for different environments and domains usin
 
 ## Content Signals Support
 
+> **Available in v3.1.0+ (currently in beta)**
+
 Content Signals ([contentsignals.org](https://contentsignals.org/)) are Cloudflare's implementation for controlling how automated systems (AI crawlers, search engines) use your content. **Content-Signal directives are restrictions on Allow rules only** and declare permissions for:
 
 - **ai-train**: Training or fine-tuning AI models
 - **search**: Building search indexes and providing search results
 - **ai-input**: Inputting content into AI models (RAG, grounding, generative AI search)
 
-**Important:** A Content-Signal directive is declared once per User-agent section and applies to **all Allow directives** for that user-agent. Multiple paths in an Allow rule will all inherit the same Content-Signal.
-
 ### How Content Signals Work
 
-Content Signals declare permissions at the **User-agent level**. When you have multiple Allow paths for a user-agent, they all share the same Content-Signal:
+Content Signals can be configured at two levels:
+
+1. **User-agent level** (default): A single Content-Signal applies to all Allow paths for that user-agent
+2. **Path-specific level** (advanced): Different Content-Signals for different paths under the same user-agent
+
+#### User-Agent Level Content Signal
+
+When you configure a single ContentSignal for a user-agent, it applies to all Allow paths:
 
 ```json
 "Allow": {
@@ -159,12 +166,53 @@ Content Signals declare permissions at the **User-agent level**. When you have m
 This generates:
 ```
 User-agent: googlebot
-Content-Signal: ai-train=no, search=yes, ai-input=no
+Content-Signal: /blog ai-train=no, search=yes, ai-input=no
 Allow: /blog
+Content-Signal: /news ai-train=no, search=yes, ai-input=no
 Allow: /news
 ```
 
-Both `/blog` and `/news` paths are covered by the single Content-Signal directive.
+Each path gets its own Content-Signal directive with the same settings.
+
+#### Path-Specific Content Signals
+
+For advanced scenarios, you can configure different Content-Signals for different paths under the same user-agent using an array of rules:
+
+```json
+"Allow": {
+  "bingbot": [
+    {
+      "Paths": ["/blog", "/news"],
+      "ContentSignal": {
+        "AiTrain": true,
+        "Search": true,
+        "AiInput": false
+      }
+    },
+    {
+      "Paths": ["/"],
+      "ContentSignal": {
+        "AiTrain": false,
+        "Search": true,
+        "AiInput": false
+      }
+    }
+  ]
+}
+```
+
+This generates:
+```
+User-agent: bingbot
+Content-Signal: /blog ai-train=yes, search=yes, ai-input=no
+Allow: /blog
+Content-Signal: /news ai-train=yes, search=yes, ai-input=no
+Allow: /news
+Content-Signal: ai-train=no, search=yes, ai-input=no
+Allow: /
+```
+
+This allows you to permit AI training on your blog content while restricting it for other areas of your site.
 
 ### Content Signal Instructions Header
 
@@ -268,8 +316,9 @@ This generates:
 # ... (legal header text) ...
 
 User-agent: googlebot
-Content-Signal: ai-train=no, search=yes, ai-input=no
+Content-Signal: /blog ai-train=no, search=yes, ai-input=no
 Allow: /blog
+Content-Signal: /news ai-train=no, search=yes, ai-input=no
 Allow: /news
 
 User-agent: OAI-SearchBot
@@ -288,7 +337,7 @@ Disallow: /cdn-cgi/
 - Specific user agents (googlebot, OAI-SearchBot) appear before the wildcard `*`
 - Each user-agent gets its own ContentSignal - googlebot and OAI-SearchBot have restricted permissions, while `*` allows everything
 - The legal header is included because `IncludeContentSignalInstructions: true`
-- googlebot's single Content-Signal applies to both `/blog` and `/news` paths
+- Each path gets its own Content-Signal directive paired with its Allow directive
 
 #### Simple and Complex Allow Rules
 
@@ -383,6 +432,54 @@ User-agent: *
   "AiInput": false
 }
 ```
+
+## Crawl-delay
+
+Control how frequently crawlers can request pages from your site on a per-user-agent basis. The `Crawl-delay` directive requests crawlers to wait a specified number of seconds between successive requests.
+
+**Configuration:**
+
+Crawl-delay is configured per user-agent in the Allow rules using the complex format:
+
+```json
+"RuleSets": {
+  "Production": {
+    "Allow": {
+      "Googlebot": {
+        "Paths": ["/"],
+        "CrawlDelay": 10
+      },
+      "Bingbot": {
+        "Paths": ["/"],
+        "CrawlDelay": 5
+      }
+    }
+  }
+}
+```
+
+This generates:
+```
+User-agent: Bingbot
+Crawl-delay: 5
+Allow: /
+
+User-agent: Googlebot
+Crawl-delay: 10
+Allow: /
+```
+
+**Notes:**
+- Crawl-delay is specified in **seconds** (integer)
+- Only available in the complex Allow rule format (not simple string array)
+- If a user-agent appears in both Allow and Disallow with different Crawl-delay values, **Allow takes precedence**
+- Not all crawlers respect Crawl-delay (Google and Bing use their own rate limiting via Search Console/Webmaster Tools)
+- Typical values: 1-10 seconds for busy sites, 0.5-2 seconds for moderate traffic
+
+**Use cases:**
+- Protect server resources during peak traffic
+- Slow down aggressive crawlers
+- Different rates for different bots (e.g., slower for less important crawlers)
 
 ## Cache Control
 

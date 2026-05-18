@@ -8,11 +8,7 @@ namespace Crumpled.RobotsTxt.Tests.Integration;
 public class UmbracoWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _dbPath;
-#if NET8_0
-    private static readonly string _seedDbPath = Path.Combine(AppContext.BaseDirectory, "Umbraco.seed.v13.sqlite.db");
-#else
-    private static readonly string _seedDbPath = Path.Combine(AppContext.BaseDirectory, "Umbraco.seed.v17.sqlite.db");
-#endif
+    private static readonly string _seedDbPath = Path.Combine(AppContext.BaseDirectory, "Umbraco.seed.v18.sqlite.db");
 
     public UmbracoWebApplicationFactory()
     {

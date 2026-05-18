@@ -8,5 +8,8 @@
       "fileMatch": ["umbraco-marketplace.json"],
       "url": "https://marketplace.umbraco.com/umbraco-marketplace-schema.json"
     }
-  ]
+  ],
+  "chat.tools.terminal.autoApprove": {
+    "dotnet test": true
+  }
 }

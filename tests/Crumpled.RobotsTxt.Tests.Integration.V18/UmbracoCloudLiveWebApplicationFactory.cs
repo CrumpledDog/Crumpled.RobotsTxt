@@ -5,25 +5,27 @@ using Microsoft.Extensions.Logging;
 
 namespace Crumpled.RobotsTxt.Tests.Integration;
 
-public class UmbracoWebApplicationFactory : WebApplicationFactory<Program>
+/// <summary>
+/// WebApplicationFactory for testing Umbraco Cloud Live environment behavior
+/// Simulates: UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME=live
+/// </summary>
+public class UmbracoCloudLiveWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _dbPath;
-#if NET8_0
-    private static readonly string _seedDbPath = Path.Combine(AppContext.BaseDirectory, "Umbraco.seed.v13.sqlite.db");
-#else
-    private static readonly string _seedDbPath = Path.Combine(AppContext.BaseDirectory, "Umbraco.seed.v17.sqlite.db");
-#endif
+    private static readonly string _seedDbPath = Path.Combine(AppContext.BaseDirectory, "Umbraco.seed.v18.sqlite.db");
 
-    public UmbracoWebApplicationFactory()
+    public UmbracoCloudLiveWebApplicationFactory()
     {
-        // Use a unique test database path
-        _dbPath = Path.Combine(Path.GetTempPath(), $"UmbracoTest_{Guid.NewGuid()}.db");
+        _dbPath = Path.Combine(Path.GetTempPath(), $"UmbracoCloudLiveTest_{Guid.NewGuid()}.db");
 
         // Copy committed seed database to test location for fast startup (if it exists)
         if (File.Exists(_seedDbPath))
         {
             File.Copy(_seedDbPath, _dbPath, true);
         }
+
+        // Set the Umbraco Cloud environment variable
+        Environment.SetEnvironmentVariable("UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME", "live");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -44,7 +46,6 @@ public class UmbracoWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureAppConfiguration((context, config) =>
         {
-            // Use file-based SQLite database for testing (in-memory doesn't work with Umbraco's connection pooling)
             var testConfig = new Dictionary<string, string>
             {
                 ["ConnectionStrings:umbracoDbDSN"] = $"Data Source={_dbPath}",
@@ -56,24 +57,20 @@ public class UmbracoWebApplicationFactory : WebApplicationFactory<Program>
                 // Suppress Serilog Fatal logs from shutdown
                 ["Serilog:MinimumLevel:Override:Microsoft.Extensions.Hosting"] = "6",
                 ["Serilog:MinimumLevel:Override:Microsoft.Hosting.Lifetime"] = "6",
-
-                // Add test configuration for duplicate disallow paths
-                ["Crumpled:RobotsTxt:RuleSets:DuplicateTest:Allow:PowerMapper:0"] = "/",
-                ["Crumpled:RobotsTxt:RuleSets:DuplicateTest:Disallow:*:0"] = "/",
-                ["Crumpled:RobotsTxt:RuleSets:DuplicateTest:Disallow:*:1"] = "/",
-                ["Crumpled:RobotsTxt:Sites:DuplicateTest:HostNames"] = "localhost:44391",
-                ["Crumpled:RobotsTxt:Sites:DuplicateTest:RuleSet"] = "DuplicateTest",
             };
 
             config.AddInMemoryCollection(testConfig!);
         });
 
-        builder.UseEnvironment("Development");
+        builder.UseEnvironment("CloudTest");
     }
 
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
+
+        // Clean up environment variable
+        Environment.SetEnvironmentVariable("UMBRACO__CLOUD__DEPLOY__ENVIRONMENTNAME", null);
 
         if (disposing && File.Exists(_dbPath))
         {

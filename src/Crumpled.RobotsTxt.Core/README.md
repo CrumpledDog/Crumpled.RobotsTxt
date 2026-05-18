@@ -35,6 +35,8 @@ app.UseRobotsTxt();
 
 ### Content Signals Support
 
+> **Available in v3.1.0+ (currently in beta)**
+
 Add Content Signals ([contentsignals.org](https://contentsignals.org/)) to control AI training and content usage:
 
 ```csharp
@@ -63,23 +65,6 @@ services.AddStaticRobotsTxt(builder =>
                     .AllowSearch(true)
                     .AllowAiInput(false))
                 .Allow("/")
-        )
-);
-```
-
-Path-specific content signals:
-
-```csharp
-services.AddStaticRobotsTxt(builder =>
-    builder
-        .AddSection(section =>
-            section
-                .AddUserAgent("*")
-                .WithContentSignal(cs => cs
-                    .ForPath("/blog/")
-                    .AllowSearch(true)
-                    .AllowAiTrain(false))
-                .Allow("/blog/")
         )
 );
 ```
