@@ -241,6 +241,12 @@ jobs:
       if: ${{ needs.setup.outputs.new_release_published == 'true' && github.event.inputs.publish_to_nuget == 'true' && (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/beta/')) && (!contains(needs.setup.outputs.semver, '-') || contains(needs.setup.outputs.semver, '-beta.')) }}
       run: dotnet nuget push "nuget-packages/Crumpled.RobotsTxt.*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
+    - name: Write Summary
+      if: ${{ needs.setup.outputs.new_release_published == 'true' }}
+      run: |
+        echo "## 📦 Package Published: v${{ needs.setup.outputs.semver }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch:** \`${GITHUB_REF#refs/heads/}\`" >> $GITHUB_STEP_SUMMARY
+
   release:
     name: Create Release
     runs-on: ubuntu-latest
@@ -371,3 +377,8 @@ jobs:
     - name: Merge release branch to develop
       if: ${{ startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/beta/') }}
       run: .github/scripts/merge-to-develop.sh "${{ needs.setup.outputs.semver }}"
+
+    - name: Write Summary
+      run: |
+        echo "## 🚀 Release Published: v${{ needs.setup.outputs.semver }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch:** \`${GITHUB_REF#refs/heads/}\`" >> $GITHUB_STEP_SUMMARY
