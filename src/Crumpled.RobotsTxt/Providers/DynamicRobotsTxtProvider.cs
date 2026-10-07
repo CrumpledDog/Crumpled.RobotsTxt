@@ -1,9 +1,7 @@
 using System.Text;
-
+using Crumpled.RobotsTxt.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
-
-using Crumpled.RobotsTxt.Core;
 
 namespace Crumpled.RobotsTxt.Providers;
 
@@ -157,7 +155,18 @@ internal class DynamicRobotsTxtProvider(
             // Only use it if no AllowRule has a path-specific ContentSignal
             var hasPathSpecificContentSignal = allowRules.Any(r => r.ContentSignal != null);
 
-            if (!hasPathSpecificContentSignal && ruleSet.ContentSignal != null)
+            // A root-path ("/") rule signal applies to the whole group, so it is rendered
+            // directly after User-agent like a RuleSet-level signal
+            var rootContentSignal = allowRules
+                .Where(r => r.ContentSignal != null && r.Paths != null && r.Paths.Any(IsRootPath))
+                .Select(r => r.ContentSignal)
+                .FirstOrDefault();
+
+            if (rootContentSignal != null)
+            {
+                AppendContentSignal(builder, rootContentSignal, null);
+            }
+            else if (!hasPathSpecificContentSignal && ruleSet.ContentSignal != null)
             {
                 AppendContentSignal(builder, ruleSet.ContentSignal, null);
             }
@@ -186,7 +195,12 @@ internal class DynamicRobotsTxtProvider(
                 {
                     foreach (var path in allowRule.Paths)
                     {
-                        AppendContentSignal(builder, allowRule.ContentSignal, path);
+                        // Root-path signal was already written after User-agent
+                        if (!(IsRootPath(path) && ReferenceEquals(allowRule.ContentSignal, rootContentSignal)))
+                        {
+                            AppendContentSignal(builder, allowRule.ContentSignal, path);
+                        }
+
                         builder.AppendLine($"Allow: {path}");
                     }
                 }
@@ -250,6 +264,8 @@ internal class DynamicRobotsTxtProvider(
             builder.AppendLine($"Content-Signal: {pathPrefix}{string.Join(", ", signals)}");
         }
     }
+
+    private static bool IsRootPath(string? path) => string.IsNullOrWhiteSpace(path) || path == "/";
 
     private static string YesNo(bool value) => value ? "yes" : "no";
 
