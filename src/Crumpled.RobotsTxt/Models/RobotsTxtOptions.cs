@@ -1,4 +1,4 @@
-﻿#pragma warning disable IDE0130
+#pragma warning disable IDE0130
 namespace Crumpled.RobotsTxt
 #pragma warning restore IDE0130
 {

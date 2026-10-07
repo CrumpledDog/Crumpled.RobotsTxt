@@ -5,8 +5,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PATH_TO_EXTENSION: "src/Crumpled.RobotsTxt"
+  PATH_TO_TESTSITE: "src/Crumpled.RobotsTxt.TestSite"
   DOTNET_VERSION: '10'
+  PACKABLE_PROJECTS: "src/Crumpled.RobotsTxt/Crumpled.RobotsTxt.csproj"
 
 on:
   workflow_dispatch:
@@ -41,48 +42,32 @@ jobs:
         with:
           fetch-depth: 0
           filter: tree:0
-      
+
       - name: Fetch all tags
         run: git fetch --force --tags
 
       - name: Calculate Branch Slug
         id: calculate-branch
         run: |
-          BRANCH_NAME="${{ github.ref_name }}"
-          echo "Current branch: $BRANCH_NAME"
-          
+          BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
+
           if [[ "$BRANCH_NAME" == hotfix/* ]] || [[ "$BRANCH_NAME" == feature/* ]]; then
-            # Convert branch name to valid semver prerelease identifier
-            # Prefix with "00-" to ensure these versions sort before alpha/beta/rc
-            # Truncate to max 12 chars to keep NuGet paths short
-            # Replace feature->ft and hotfix->hf to save more space
-            # Trim trailing hyphen if present after truncation
             BRANCH_SLUG=$(echo "$BRANCH_NAME" | sed 's/feature\//ft-/g; s/hotfix\//hf-/g; s/\//-/g' | cut -c 1-12 | sed 's/-$//')
             PRERELEASE_ID="00-${BRANCH_SLUG}"
-            echo "Branch slug: $BRANCH_SLUG"
-            echo "Prerelease ID: $PRERELEASE_ID"
             echo "prerelease_id=$PRERELEASE_ID" >> $GITHUB_OUTPUT
           else
-            echo "Branch does not match hotfix/* or feature/*, no prerelease ID needed"
             echo "prerelease_id=" >> $GITHUB_OUTPUT
           fi
 
       - name: Update .releaserc for current branch
         if: ${{ steps.calculate-branch.outputs.prerelease_id != '' }}
         run: |
-          BRANCH_NAME="${{ github.ref_name }}"
+          BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
           PRERELEASE_ID="${{ steps.calculate-branch.outputs.prerelease_id }}"
-          
-          echo "Adding branch config: $BRANCH_NAME with prerelease: $PRERELEASE_ID"
-          
-          # Read current .releaserc, add the branch entry, and save
           jq --arg name "$BRANCH_NAME" --arg prerelease "$PRERELEASE_ID" \
             '.branches += [{"name": $name, "prerelease": $prerelease}]' \
             .releaserc > .releaserc.tmp && mv .releaserc.tmp .releaserc
-          
-          echo "Updated .releaserc:"
-          cat .releaserc
-        
+
       - name: Semantic Release (Dry Run)
         id: semantic
         uses: cycjimmy/semantic-release-action@v6
@@ -94,7 +79,7 @@ jobs:
             @semantic-release/exec
             @semantic-release/commit-analyzer
             @semantic-release/release-notes-generator
-            conventional-changelog-conventionalcommits
+            conventional-changelog-conventionalcommits@^9
 
       - name: Check Release
         run: |
@@ -102,22 +87,17 @@ jobs:
             echo "::error::No release version generated. Ensure there are conventional commits since the last release."
             exit 1
           fi
-          echo "Release version: ${{ steps.semantic.outputs.new_release_version }}"
 
-      - name: Echo the version
-        run: |
-          echo "New release version: '${{ steps.semantic.outputs.new_release_version }}'"
-          echo "New release major: '${{ steps.semantic.outputs.new_release_major_version }}'"
-          echo "New release minor: '${{ steps.semantic.outputs.new_release_minor_version }}'"
-          echo "New release patch: '${{ steps.semantic.outputs.new_release_patch_version }}'"
-          echo "Last release version: '${{ steps.semantic.outputs.last_release_version }}'"
-          echo "New release published: '${{ steps.semantic.outputs.new_release_published }}'"
-  
   build:
     name: Build, Test and Package
     runs-on: ubuntu-latest
     needs: setup
-    timeout-minutes: 10
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      checks: write
+    env:
+      MYGET_API_KEY: ${{ secrets.MYGET_API_KEY }}
     steps:
     - uses: actions/checkout@v5
       with:
@@ -126,25 +106,66 @@ jobs:
     - uses: actions/setup-dotnet@v5
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
-    
-    - name: Cache NuGet
-      id: nuget-packages
-      uses: actions/cache@v5
-      with:
-        path: ~/.nuget/packages
-        key: nuget-cache-${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj*') }}
-        restore-keys: |
-          nuget-cache-${{ runner.os }}-nuget-
-
-    - name: Dotnet Format check
-      run: dotnet format --verify-no-changes --verbosity diagnostic
 
     - name: Update Version Files
       id: update-version
       uses: CrumpledDog/Crumpled.Umbraco.Package.Actions/update-version-files@main
       with:
         semver: ${{ needs.setup.outputs.semver }}
-        path-to-extension: ${{ env.PATH_TO_EXTENSION }}
+        path-to-extension: src/Crumpled.RobotsTxt
+
+    - name: Dotnet Format check
+      run: dotnet format --verify-no-changes --verbosity diagnostic
+
+    - name: Cache NuGet
+      uses: actions/cache@v6
+      with:
+        path: ~/.nuget/packages
+        key: nuget-cache-${{ runner.os }}-${{ github.ref_name }}-${{ hashFiles('**/*.csproj*') }}
+        restore-keys: |
+          nuget-cache-${{ runner.os }}-${{ github.ref_name }}-
+          nuget-cache-${{ runner.os }}-nuget-
+
+    - name: Build Project
+      working-directory: ${{ env.PATH_TO_TESTSITE }}
+      run: dotnet build -c Release
+
+    - name: Start Project
+      working-directory: ${{ github.workspace }}/${{ env.PATH_TO_TESTSITE }}
+      shell: bash
+      run: |
+        nohup dotnet run --no-build --no-restore -c Release > ../../app.log 2> ../../app-errors.log &
+        echo "DOTNET_PID=$!" >> $GITHUB_ENV
+        sleep 5
+
+    - name: Health Check
+      shell: bash
+      run: |
+        # Polls the package's own /robots.txt rather than the site root - the root route depends
+        # on Umbraco having routable content, which races with a fresh unattended install and can
+        # throw ("No UmbracoRouteValues feature was found") if hit before content is ready.
+        for i in {1..30}; do
+          if curl -k -s -o /dev/null -w "%{http_code}" https://localhost:44389/robots.txt | grep -q "200"; then
+            echo "Umbraco is responding!"
+            exit 0
+          fi
+          sleep 2
+        done
+        echo "Umbraco failed to respond after 30 attempts"
+        exit 1
+
+    - name: Stop Project
+      if: always()
+      shell: bash
+      run: |
+        if [ -n "$DOTNET_PID" ] && ps -p $DOTNET_PID > /dev/null 2>&1; then
+          kill $DOTNET_PID 2>/dev/null || true
+          sleep 2
+        fi
+
+    - name: Check for Startup Errors
+      shell: pwsh
+      run: '.github/scripts/Check-StartupErrors.ps1 -LogPath "${{ env.PATH_TO_TESTSITE }}/umbraco/Logs"'
 
     - name: Build slnx
       run: dotnet build ${{ github.workspace }}/*.slnx -c Release /maxcpucount:1
@@ -182,27 +203,155 @@ jobs:
         reporter: dotnet-trx
         fail-on-error: true
 
-    - name: Pack NuGet Package
-      working-directory: ${{ env.PATH_TO_EXTENSION }}
-      run: dotnet pack --configuration Release /p:PackageVersion=${{ needs.setup.outputs.semver }} /p:FileVersion=${{ steps.update-version.outputs.file-version }}
+    - name: Pack NuGet Packages
+      run: |
+        mkdir -p artifacts/nuget
+        for proj in ${{ env.PACKABLE_PROJECTS }}; do
+          dotnet pack "$proj" --configuration Release -o artifacts/nuget /p:PackageVersion=${{ needs.setup.outputs.semver }} /p:FileVersion=${{ steps.update-version.outputs.file-version }}
+        done
 
     - name: Upload NuGet Packages
       uses: actions/upload-artifact@v7
       with:
         name: nuget-packages
         path: |
-          ${{ env.PATH_TO_EXTENSION }}/bin/Release/*.nupkg
-          ${{ env.PATH_TO_EXTENSION }}/bin/Release/*.snupkg
+          artifacts/nuget/*.nupkg
+          artifacts/nuget/*.snupkg
         retention-days: 1
 
-  publish:
-    name: Publish Package
+    - name: Upload Logs on Failure
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: sqlite-logs
+        path: |
+          app.log
+          app-errors.log
+          ${{ env.PATH_TO_TESTSITE }}/umbraco/Logs/
+        retention-days: 3
+
+  test-packages:
+    name: Test Packed NuGet Packages Standalone
     runs-on: ubuntu-latest
+    if: ${{ github.actor != 'nektos/act' }}
     needs: [setup, build]
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v5
+
+    - uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Cache NuGet
+      uses: actions/cache@v6
+      with:
+        path: ~/.nuget/packages
+        key: nuget-cache-${{ runner.os }}-${{ github.ref_name }}-${{ hashFiles('**/*.csproj*') }}
+        restore-keys: |
+          nuget-cache-${{ runner.os }}-${{ github.ref_name }}-
+          nuget-cache-${{ runner.os }}-nuget-
+
+    - name: Download NuGet Packages
+      uses: actions/download-artifact@v8
+      with:
+        name: nuget-packages
+        path: ./nuget-packages
+
+    - name: Flatten NuGet Packages
+      shell: bash
+      run: |
+        # The artifact preserves the src/**/artifacts/nuget path, but NuGet's folder-based package
+        # source expects packages flat (or in id/version subfolders) - nested under arbitrary paths,
+        # it tries to parse an intermediate folder name as a version and silently gives up before
+        # reaching the real .nupkg.
+        mkdir -p ./nuget-packages-flat
+        find ./nuget-packages -name "*.nupkg" -o -name "*.snupkg" | xargs -I{} cp {} ./nuget-packages-flat/
+
+    - name: Configure NuGet with Package Source Mapping
+      working-directory: ${{ env.PATH_TO_TESTSITE }}
+      shell: bash
+      run: |
+        cat > nuget.config <<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <configuration>
+          <packageSources>
+            <add key="nuget.org" value="https://api.nuget.org/v3/index.json" protocolVersion="3" />
+            <add key="LocalPackages" value="${{ github.workspace }}/nuget-packages-flat" />
+          </packageSources>
+          <packageSourceMapping>
+            <packageSource key="LocalPackages">
+              <package pattern="Crumpled.RobotsTxt*" />
+            </packageSource>
+            <packageSource key="nuget.org">
+              <package pattern="*" />
+            </packageSource>
+          </packageSourceMapping>
+        </configuration>
+        EOF
+
+    - name: Replace ProjectReference with PackageReference
+      working-directory: ${{ env.PATH_TO_TESTSITE }}
+      shell: bash
+      run: |
+        set -e
+        dotnet remove reference ../Crumpled.RobotsTxt/Crumpled.RobotsTxt.csproj
+        dotnet add package Crumpled.RobotsTxt --version ${{ needs.setup.outputs.semver }}
+
+    - name: Restore and Build with NuGet Packages
+      working-directory: ${{ env.PATH_TO_TESTSITE }}
+      run: dotnet build -c Release
+
+    - name: Start Application
+      working-directory: ${{ env.PATH_TO_TESTSITE }}
+      shell: bash
+      run: |
+        nohup dotnet run --no-build -c Release > ../../app.log 2> ../../app-errors.log &
+        echo "DOTNET_PID=$!" >> $GITHUB_ENV
+        sleep 5
+
+        for i in {1..30}; do
+          if curl -k -s -o /dev/null -w "%{http_code}" https://localhost:44389/robots.txt | grep -q "200"; then
+            exit 0
+          fi
+          sleep 2
+        done
+        exit 1
+
+    - name: Check for Startup Errors
+      shell: pwsh
+      run: '.github/scripts/Check-StartupErrors.ps1 -LogPath "${{ env.PATH_TO_TESTSITE }}/umbraco/Logs"'
+
+    - name: Upload Logs on Failure
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: package-test-logs
+        path: |
+          app.log
+          app-errors.log
+          ${{ env.PATH_TO_TESTSITE }}/umbraco/Logs/
+        retention-days: 3
+
+  publish:
+    name: Publish Packages
+    runs-on: ubuntu-latest
+    needs: [setup, build, test-packages]
     timeout-minutes: 5
+    permissions:
+      contents: read     # Required to check out the repo - a job-level permissions block resets
+                         # every unlisted scope to none, and an omitted contents scope only goes
+                         # unnoticed on a public repo (checkout still works anonymously there); on
+                         # a private package repo it fails checkout with "Repository not found"
+      id-token: write    # Required for NuGet trusted publishing (OIDC)
+      packages: write    # Required for pushing to GitHub Packages
     env:
       MYGET_API_KEY: ${{ secrets.MYGET_API_KEY }}
     steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+
     - uses: actions/setup-dotnet@v5
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
@@ -219,32 +368,44 @@ jobs:
         dotnet tool install -g dotnet-validate --prerelease
         echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
-    - name: Validate NuGet Package
+    - name: Validate NuGet Packages
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
       run: |
         export PATH="$HOME/.dotnet/tools:$PATH"
-        dotnet validate package local nuget-packages/Crumpled.RobotsTxt.*.nupkg
+        for pkg in nuget-packages/Crumpled.RobotsTxt*.nupkg; do
+          dotnet validate package local "$pkg"
+        done
 
     - name: Add GitHub Packages Source
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
       run: dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/CrumpledDog/index.json"
 
-    - name: Push GitHub NuGet Package
+    - name: Push GitHub Packages
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
-      run: dotnet nuget push "nuget-packages/Crumpled.RobotsTxt.*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source "github" --skip-duplicate
+      run: dotnet nuget push "nuget-packages/Crumpled.RobotsTxt*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source "github" --skip-duplicate
 
-    - name: Push MyGet Package
+    - name: Push MyGet Packages
       if: needs.setup.outputs.new_release_published == 'true' && env.MYGET_API_KEY != ''
-      run: dotnet nuget push "nuget-packages/Crumpled.RobotsTxt.*.nupkg" --api-key ${{ env.MYGET_API_KEY }} --source https://www.myget.org/F/umbraco-packages/api/v2/package --skip-duplicate
+      run: |
+        dotnet nuget push "nuget-packages/Crumpled.RobotsTxt*.nupkg" --api-key ${{ env.MYGET_API_KEY }} --source https://www.myget.org/F/umbraco-packages/api/v2/package --skip-duplicate
+        dotnet nuget push "nuget-packages/Crumpled.RobotsTxt*.snupkg" --api-key ${{ env.MYGET_API_KEY }} --source https://www.myget.org/F/umbraco-packages/symbols/api/v2/package --skip-duplicate
+
+    - name: NuGet Trusted Publishing Login
+      if: ${{ needs.setup.outputs.new_release_published == 'true' && github.event.inputs.publish_to_nuget == 'true' && (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/beta/')) && (!contains(needs.setup.outputs.semver, '-') || contains(needs.setup.outputs.semver, '-beta.')) }}
+      uses: NuGet/login@v1
+      id: nuget-login
+      with:
+        user: ${{ vars.NUGET_TRUSTED_PUBLISHING_USER }}
 
     - name: Push to Nuget.org
       if: ${{ needs.setup.outputs.new_release_published == 'true' && github.event.inputs.publish_to_nuget == 'true' && (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/beta/')) && (!contains(needs.setup.outputs.semver, '-') || contains(needs.setup.outputs.semver, '-beta.')) }}
-      run: dotnet nuget push "nuget-packages/Crumpled.RobotsTxt.*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      run: |
+        dotnet nuget push "nuget-packages/Crumpled.RobotsTxt*.nupkg" --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
     - name: Write Summary
       if: ${{ needs.setup.outputs.new_release_published == 'true' }}
       run: |
-        echo "## 📦 Package Published: v${{ needs.setup.outputs.semver }}" >> $GITHUB_STEP_SUMMARY
+        echo "## Package Built: v${{ needs.setup.outputs.semver }}" >> $GITHUB_STEP_SUMMARY
         echo "**Branch:** \`${GITHUB_REF#refs/heads/}\`" >> $GITHUB_STEP_SUMMARY
 
   release:
@@ -261,32 +422,56 @@ jobs:
       with:
         fetch-depth: 0
         filter: tree:0
-    
+
     - name: Fetch all tags
       run: git fetch --force --tags
+
+    # actions/checkout above pinned HEAD to the branch tip at whatever moment this job started -
+    # by the time this runs, the setup/build/publish jobs before it have taken several
+    # minutes, and any commit pushed to the branch in that window makes semantic-release's own
+    # "is the local branch behind the remote" guard correctly (but unhelpfully) refuse to publish.
+    # Re-pointing HEAD at the branch's current remote tip right before the real Semantic Release
+    # step closes that window. Must run before the .releaserc patch below, since reset --hard
+    # would otherwise discard that uncommitted change.
+    - name: Sync local branch with remote tip
+      run: |
+        git fetch origin "${{ github.ref_name }}"
+        git reset --hard "origin/${{ github.ref_name }}"
 
     - name: Update .releaserc for current branch
       if: ${{ needs.setup.outputs.prerelease_id != '' }}
       run: |
-        BRANCH_NAME="${{ github.ref_name }}"
+        BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
         PRERELEASE_ID="${{ needs.setup.outputs.prerelease_id }}"
-        
-        echo "Adding branch config: $BRANCH_NAME with prerelease: $PRERELEASE_ID"
-        
         jq --arg name "$BRANCH_NAME" --arg prerelease "$PRERELEASE_ID" \
           '.branches += [{"name": $name, "prerelease": $prerelease}]' \
           .releaserc > .releaserc.tmp && mv .releaserc.tmp .releaserc
-        
-        echo "Updated .releaserc:"
-        cat .releaserc
 
+    - name: Semantic Release
+      id: semantic
+      uses: cycjimmy/semantic-release-action@v6
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        dry_run: false
+        extra_plugins: |
+          @semantic-release/exec
+          @semantic-release/commit-analyzer
+          @semantic-release/release-notes-generator
+          conventional-changelog-conventionalcommits@^9
+
+    # Reuses semantic-release's own generated notes (steps.semantic.outputs.new_release_notes)
+    # rather than a second gh api releases/generate-notes call and manual previous-tag diffing -
+    # simpler, and it's the same changelog semantic-release already computed for this version.
+    # The nuget.org branch is the exception: nuget.org only ever receives stable/beta versions, so
+    # its notes cover everything since the last version published there, not just since the last tag.
     - name: Generate Release Notes Body
-      if: ${{ github.event.inputs.create_github_release != 'false' }}
+      if: ${{ steps.semantic.outputs.new_release_published == 'true' && github.event.inputs.create_github_release != 'false' }}
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        BRANCH_NAME="${{ github.ref_name }}"
-        
+        BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
+
         if [[ "$BRANCH_NAME" == hotfix/* ]] || [[ "$BRANCH_NAME" == feature/* ]]; then
           echo "## ⚠️ Test Release from \`$BRANCH_NAME\`" > release_body.md
           echo "" >> release_body.md
@@ -302,23 +487,23 @@ jobs:
         elif [[ "${{ github.event.inputs.publish_to_nuget }}" == "true" && ("${{ needs.setup.outputs.semver }}" != *"-"* || "${{ needs.setup.outputs.semver }}" == *"-beta."*) ]]; then
           cat << 'EOF' > release_body.md
         ## Installation
-        
+
         ```bash
         dotnet add package Crumpled.RobotsTxt --version ${{ needs.setup.outputs.semver }}
         ```
         EOF
-          
+
           echo "" >> release_body.md
           echo "---" >> release_body.md
           echo "" >> release_body.md
-          
+
           CURRENT_TAG="v${{ needs.setup.outputs.semver }}"
           if [[ "${{ needs.setup.outputs.semver }}" == *"-beta."* ]]; then
             LAST_NUGET_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$' | grep -v "^${CURRENT_TAG}$" | head -n1)
           else
             LAST_NUGET_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -v "^${CURRENT_TAG}$" | head -n1)
           fi
-          
+
           if [[ -n "$LAST_NUGET_TAG" ]]; then
             echo "## What's Changed (since $LAST_NUGET_TAG)" >> release_body.md
             echo "" >> release_body.md
@@ -328,42 +513,32 @@ jobs:
             echo "" >> release_body.md
             gh api repos/${{ github.repository }}/releases/generate-notes -F tag_name="v${{ needs.setup.outputs.semver }}" --jq .body | sed '/^## What'"'"'s Changed$/d' >> release_body.md
           fi
+          exit 0
         else
           echo "## Installation" > release_body.md
           echo "" >> release_body.md
-          
-          if [[ -n "${{ env.MYGET_API_KEY }}" ]]; then
+
+          if [[ -n "${{ secrets.MYGET_API_KEY }}" ]]; then
             cat << 'EOF' >> release_body.md
         ### From MyGet (pre-release)
-        
+
         ```bash
         dotnet add package Crumpled.RobotsTxt --version ${{ needs.setup.outputs.semver }} --source https://www.myget.org/F/umbraco-packages/api/v3/index.json
         ```
-        
+
         EOF
           fi
-          
+
           cat << 'EOF' >> release_body.md
         ### From GitHub Packages (pre-release)
-        
+
         ```bash
         dotnet add package Crumpled.RobotsTxt --version ${{ needs.setup.outputs.semver }} --source https://nuget.pkg.github.com/CrumpledDog/index.json
         ```
         EOF
         fi
 
-    - name: Semantic Release
-      id: semantic
-      uses: cycjimmy/semantic-release-action@v6
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        dry_run: false
-        extra_plugins: |
-          @semantic-release/exec
-          @semantic-release/commit-analyzer
-          @semantic-release/release-notes-generator
-          conventional-changelog-conventionalcommits
+        printf '\n%s\n' "${{ steps.semantic.outputs.new_release_notes }}" | sed '/^#\+ \[/d' >> release_body.md
 
     - name: Update GitHub Release with Custom Notes
       if: ${{ steps.semantic.outputs.new_release_published == 'true' && github.event.inputs.create_github_release != 'false' }}
@@ -374,11 +549,43 @@ jobs:
         body_path: release_body.md
         prerelease: ${{ contains(needs.setup.outputs.semver, '-') }}
 
+    - name: Make merge script executable
+      if: ${{ startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/beta/') }}
+      # Belt-and-braces: packages are typically developed on Windows, where git doesn't reliably
+      # track the executable bit, so the script's mode in the checkout can't be trusted to be +x.
+      run: chmod +x .github/scripts/merge-to-develop.sh
+
     - name: Merge release branch to develop
       if: ${{ startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/beta/') }}
       run: .github/scripts/merge-to-develop.sh "${{ needs.setup.outputs.semver }}"
 
     - name: Write Summary
       run: |
-        echo "## 🚀 Release Published: v${{ needs.setup.outputs.semver }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Branch:** \`${GITHUB_REF#refs/heads/}\`" >> $GITHUB_STEP_SUMMARY
+        echo "## Release Published: v${{ needs.setup.outputs.semver }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Tag:** \`v${{ needs.setup.outputs.semver }}\`" >> $GITHUB_STEP_SUMMARY
+
+  security:
+    if: false # temporarily disabled until we can get Trivy working in GitHub Actions
+    name: Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
