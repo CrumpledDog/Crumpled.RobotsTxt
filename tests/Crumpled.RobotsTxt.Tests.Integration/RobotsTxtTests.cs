@@ -278,12 +278,15 @@ public class RobotsTxtTests : IClassFixture<UmbracoWebApplicationFactory>
 
         var rootAllowIndex = bingbotSection.LastIndexOf("Allow: /", StringComparison.Ordinal);
 
-        // Verify ordering: Content-Signal /blog, Allow /blog, Content-Signal /news, Allow /news, Content-Signal (root), Allow /
+        // Verify ordering: Content-Signal (root) directly after User-agent, then
+        // Content-Signal /blog, Allow /blog, Content-Signal /news, Allow /news, Allow /
+        var firstLineAfterUserAgent = bingbotSection.Split('\n').Skip(1).First().Trim();
+        Assert.StartsWith("Content-Signal: ai-train=no", firstLineAfterUserAgent);
+        Assert.True(rootContentSignalIndex < blogContentSignalIndex, "Content-Signal (root) should appear before path-specific signals");
         Assert.True(blogContentSignalIndex < blogAllowIndex, "Content-Signal /blog should appear before Allow /blog");
         Assert.True(blogAllowIndex < newsContentSignalIndex, "Allow /blog should appear before Content-Signal /news");
         Assert.True(newsContentSignalIndex < newsAllowIndex, "Content-Signal /news should appear before Allow /news");
-        Assert.True(newsAllowIndex < rootContentSignalIndex, "Allow /news should appear before Content-Signal (root)");
-        Assert.True(rootContentSignalIndex < rootAllowIndex, "Content-Signal (root) should appear before Allow /");
+        Assert.True(newsAllowIndex < rootAllowIndex, "Allow /news should appear before Allow /");
     }
 
     [Fact]

@@ -1,6 +1,6 @@
 # Crumpled.RobotsTxt
 
-A flexible, configuration-driven robots.txt solution for **Umbraco v13, v14, v15, v16 & v17**
+A flexible, configuration-driven robots.txt solution for **Umbraco v13, v14, v15, v16, v17 & v18**
 
 <img src="crumpled-robots-txt.svg" width="150" />
 
@@ -14,6 +14,8 @@ This repository contains:
 - **[Crumpled.RobotsTxt.Core](src/Crumpled.RobotsTxt.Core/)** - Internal ASP.NET Core robots.txt middleware implementation
 - **[Crumpled.RobotsTxt.TestSite](src/Crumpled.RobotsTxt.TestSite/)** - Test Umbraco site for development (Umbraco v17.*)
 - **[Crumpled.RobotsTxt.TestSite13](src/Crumpled.RobotsTxt.TestSite13/)** - Test Umbraco site for v13 compatibility
+- **[Crumpled.RobotsTxt.TestSite18](src/Crumpled.RobotsTxt.TestSite18/)** - Test Umbraco site for v18 compatibility
+- **[Crumpled.RobotsTxt.Tests.Integration](tests/Crumpled.RobotsTxt.Tests.Integration/)** / **[Tests.Integration.V18](tests/Crumpled.RobotsTxt.Tests.Integration.V18/)** - Integration tests (Umbraco v13 and v17 / v18)
 
 ## Installation
 
@@ -28,7 +30,7 @@ dotnet add package Crumpled.RobotsTxt
 - 🛡️ **Safe by Default** - Blocks all bots by default to prevent accidental indexing
 - 🌍 **Multi-Site & Environment-Aware** - Different rules per domain/environment
 - 📝 **Flexible Configuration** - Reusable rulesets via appsettings.json
-- 🤖 **Content Signals Support** - Control AI training and content usage (v3.1.0+, currently in beta)
+- 🤖 **Content Signals Support** - Control AI training and content usage (v3.1.0+)
 - 🗺️ **Sitemap Integration** - Automatic sitemap URL generation
 - ⚙️ **Zero Code Setup** - Auto-registration via Umbraco Composer
 
@@ -40,6 +42,8 @@ dotnet add package Crumpled.RobotsTxt
 **[Crumpled.RobotsTxt.TestSite](src/Crumpled.RobotsTxt.TestSite/)** - Umbraco v17 test site with unattended installation. Credentials (not that you really need them) are set in [appsettings.Development.json](src/Crumpled.RobotsTxt.TestSite/appsettings.Development.json)
 
 **[Crumpled.RobotsTxt.TestSite13](src/Crumpled.RobotsTxt.TestSite13/)** - Umbraco v13 test site for backward compatibility testing
+
+**[Crumpled.RobotsTxt.TestSite18](src/Crumpled.RobotsTxt.TestSite18/)** - Umbraco v18 test site
 
 ### Launch Profiles
 
@@ -182,3 +186,15 @@ All branches trigger the CI workflow which:
 3. Determines version using semantic-release
 4. Packs NuGet package with calculated version
 5. Publishes to NuGet (on successful build)
+## Requirements
+
+- Umbraco v13, v14, v15, v16, v17 or v18
+- The .NET SDK pinned in [global.json](global.json) to build this repository
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for formatting requirements, the branching strategy and commit message conventions.
+
+## License
+
+Released under the terms of the [LICENSE](LICENSE).
