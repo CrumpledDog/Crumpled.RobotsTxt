@@ -389,9 +389,11 @@ jobs:
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
 
+      # SARIF upload to GitHub code scanning is free on public repos only (private repos need
+      # GitHub Advanced Security), so private packages just get the findings in this job's log.
       - name: Upload Trivy results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v4
         if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-        continue-on-error: true # requires GitHub Advanced Security on this private repo - the scan itself still ran above
+        continue-on-error: true # the scan itself still ran above
         with:
           sarif_file: 'trivy-results.sarif'
