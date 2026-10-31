@@ -1,6 +1,6 @@
 # Crumpled.RobotsTxt
 
-A flexible, configuration-driven robots.txt solution for **Umbraco v13, v14, v15, v16, v17 & v18**
+A flexible, configuration-driven robots.txt solution for **Umbraco v13, v14, v15, v16, v17, v18 & v19**
 
 <img src="crumpled-robots-txt.svg" width="150" />
 
@@ -15,7 +15,8 @@ This repository contains:
 - **[Crumpled.RobotsTxt.TestSite](src/Crumpled.RobotsTxt.TestSite/)** - Test Umbraco site for development (Umbraco v17.*)
 - **[Crumpled.RobotsTxt.TestSite13](src/Crumpled.RobotsTxt.TestSite13/)** - Test Umbraco site for v13 compatibility
 - **[Crumpled.RobotsTxt.TestSite18](src/Crumpled.RobotsTxt.TestSite18/)** - Test Umbraco site for v18 compatibility
-- **[Crumpled.RobotsTxt.Tests.Integration](tests/Crumpled.RobotsTxt.Tests.Integration/)** / **[Tests.Integration.V18](tests/Crumpled.RobotsTxt.Tests.Integration.V18/)** - Integration tests (Umbraco v13 and v17 / v18)
+- **[Crumpled.RobotsTxt.TestSite19](src/Crumpled.RobotsTxt.TestSite19/)** - Test Umbraco site for v19 compatibility
+- **[Crumpled.RobotsTxt.Tests.Integration](tests/Crumpled.RobotsTxt.Tests.Integration/)** / **[Tests.Integration.V18](tests/Crumpled.RobotsTxt.Tests.Integration.V18/)** / **[Tests.Integration.V19](tests/Crumpled.RobotsTxt.Tests.Integration.V19/)** - Integration tests (Umbraco v13 and v17 / v18 / v19)
 
 ## Installation
 
@@ -44,6 +45,8 @@ dotnet add package Crumpled.RobotsTxt
 **[Crumpled.RobotsTxt.TestSite13](src/Crumpled.RobotsTxt.TestSite13/)** - Umbraco v13 test site for backward compatibility testing
 
 **[Crumpled.RobotsTxt.TestSite18](src/Crumpled.RobotsTxt.TestSite18/)** - Umbraco v18 test site
+
+**[Crumpled.RobotsTxt.TestSite19](src/Crumpled.RobotsTxt.TestSite19/)** - Umbraco v19 test site (.NET 11, 19.0.0-beta1)
 
 ### Launch Profiles
 
@@ -188,7 +191,7 @@ All branches trigger the CI workflow which:
 5. Publishes to NuGet (on successful build)
 ## Requirements
 
-- Umbraco v13, v14, v15, v16, v17 or v18
+- Umbraco v13, v14, v15, v16, v17, v18 or v19
 - The .NET SDK pinned in [global.json](global.json) to build this repository
 
 ## Contributing

@@ -22,7 +22,7 @@ All PRs must pass `dotnet format --verify-no-changes` in CI or they will be reje
 
 ## Branching Strategy
 
-This project uses Git Flow with version-specific branches. The current line is `v3`, which supports Umbraco 13 to 18.
+This project uses Git Flow with version-specific branches. The current line is `v3`, which supports Umbraco 13 to 19.
 
 ### Main Branches
 
@@ -68,6 +68,7 @@ Integration tests run against several Umbraco majors:
 dotnet test tests/Crumpled.RobotsTxt.Tests.Integration --framework net8.0    # Umbraco 13
 dotnet test tests/Crumpled.RobotsTxt.Tests.Integration --framework net10.0   # Umbraco 17
 dotnet test tests/Crumpled.RobotsTxt.Tests.Integration.V18                   # Umbraco 18
+dotnet test tests/Crumpled.RobotsTxt.Tests.Integration.V19                   # Umbraco 19 (needs .NET 11 SDK)
 ```
 
 ## Commit Messages
