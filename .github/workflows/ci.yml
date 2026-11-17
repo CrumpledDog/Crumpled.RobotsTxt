@@ -129,7 +129,10 @@ jobs:
 
     - uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
+        dotnet-version: |
+          ${{ env.DOTNET_VERSION }}
+          11.0.x
+        dotnet-quality: preview
 
     - name: Update Version Files
       id: update-version
@@ -199,6 +202,7 @@ jobs:
         dotnet test tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj --configuration Release --framework net8.0 --no-build --logger "trx;LogFileName=test-results-net8.0.trx" --logger "GitHubActions" --logger "console;verbosity=normal"
         dotnet test tests/Crumpled.RobotsTxt.Tests.Integration/Crumpled.RobotsTxt.Tests.Integration.csproj --configuration Release --framework net10.0 --no-build --logger "trx;LogFileName=test-results-net10.0.trx" --logger "GitHubActions" --logger "console;verbosity=normal"
         dotnet test tests/Crumpled.RobotsTxt.Tests.Integration.V18/Crumpled.RobotsTxt.Tests.Integration.V18.csproj --configuration Release --framework net10.0 --no-build --logger "trx;LogFileName=test-results-v18.trx" --logger "GitHubActions" --logger "console;verbosity=normal"
+        dotnet test tests/Crumpled.RobotsTxt.Tests.Integration.V19/Crumpled.RobotsTxt.Tests.Integration.V19.csproj --configuration Release --framework net11.0 --no-build --logger "trx;LogFileName=test-results-v19.trx" --logger "GitHubActions" --logger "console;verbosity=normal"
 
     - name: Publish Test Results (Umbraco v13)
       uses: dorny/test-reporter@v3
@@ -224,6 +228,15 @@ jobs:
       with:
         name: Integration Test Results (Umbraco v18)
         path: '**/test-results-v18.trx'
+        reporter: dotnet-trx
+        fail-on-error: true
+
+    - name: Publish Test Results (Umbraco v19)
+      uses: dorny/test-reporter@v3
+      if: always()
+      with:
+        name: Integration Test Results (Umbraco v19)
+        path: '**/test-results-v19.trx'
         reporter: dotnet-trx
         fail-on-error: true
 
