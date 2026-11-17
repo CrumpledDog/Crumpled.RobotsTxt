@@ -46,7 +46,7 @@ dotnet add package Crumpled.RobotsTxt
 
 **[Crumpled.RobotsTxt.TestSite18](src/Crumpled.RobotsTxt.TestSite18/)** - Umbraco v18 test site
 
-**[Crumpled.RobotsTxt.TestSite19](src/Crumpled.RobotsTxt.TestSite19/)** - Umbraco v19 test site (.NET 11, 19.0.0-beta1)
+**[Crumpled.RobotsTxt.TestSite19](src/Crumpled.RobotsTxt.TestSite19/)** - Umbraco v19 test site (.NET 11, 19.0.0-rc1)
 
 ### Launch Profiles
 
